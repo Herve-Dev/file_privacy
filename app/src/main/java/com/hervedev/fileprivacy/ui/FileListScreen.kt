@@ -215,13 +215,22 @@ fun FileListScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 0.dp,
+                    tonalElevation = 0.dp
                 ) {
-                    items(fileItems, key = { it.path }) { item ->
-                        val isSelected = selectedPaths.contains(item.path)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(all = Spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                    ) {
+                        items(fileItems, key = { it.path }) { item ->
+                            val isSelected = selectedPaths.contains(item.path)
 
                         Box {
                             FileListItem(
@@ -301,6 +310,7 @@ fun FileListScreen(
                 }
             }
         }
+    }
     }
 
     // Dialogs

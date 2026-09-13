@@ -1,6 +1,7 @@
 package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hervedev.fileprivacy.ui.theme.Radius
+import com.hervedev.fileprivacy.ui.theme.Spacing
 import java.io.File
 
 data class BreadcrumbItem(
@@ -111,13 +113,14 @@ fun BreadcrumbBar(
 
     Surface(
         shape = RoundedCornerShape(Radius.pill),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = modifier.padding(vertical = 4.dp)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier.padding(vertical = Spacing.extraSmall)
     ) {
         LazyRow(
             state = listState,
             verticalAlignment = Alignment.CenterVertically,
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
             horizontalArrangement = Arrangement.Start
         ) {
             itemsIndexed(items, key = { _, item -> item.path }) { index, item ->
@@ -128,7 +131,7 @@ fun BreadcrumbBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                             modifier = Modifier.padding(horizontal = 2.dp)
                         )
                     }
@@ -138,7 +141,7 @@ fun BreadcrumbBar(
                         modifier = Modifier
                             .clip(RoundedCornerShape(Radius.pill))
                             .clickable(enabled = !item.isCurrent) { onItemClick(item.path) }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         if (item.isRoot) {
                             Icon(
@@ -146,13 +149,13 @@ fun BreadcrumbBar(
                                 contentDescription = "Racine",
                                 tint = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .size(18.dp)
                                     .padding(end = 4.dp)
                             )
                         }
                         Text(
                             text = item.name,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (item.isCurrent) FontWeight.Bold else FontWeight.Medium,
                             color = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )

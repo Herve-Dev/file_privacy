@@ -1,0 +1,250 @@
+package com.hervedev.fileprivacy.ui
+
+import android.os.Environment
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.SdCard
+import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.hervedev.fileprivacy.ui.navigation.NavRoutes
+import com.hervedev.fileprivacy.ui.theme.Radius
+import com.hervedev.fileprivacy.ui.theme.Spacing
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    navController: NavController
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "FilePrivacy",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+        ) {
+            // Section Stockage
+            item {
+                Text(
+                    text = "Stockage",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
+                )
+            }
+
+            item {
+                SourceCard(
+                    title = "Stockage interne",
+                    subtitle = "Mémoire du téléphone",
+                    icon = Icons.Default.PhoneAndroid,
+                    isEnabled = true,
+                    onClick = {
+                        val rootPath = Environment.getExternalStorageDirectory().absolutePath
+                        navController.navigate(NavRoutes.fileListRoute("local", rootPath))
+                    }
+                )
+            }
+
+            item {
+                SourceCard(
+                    title = "Carte SD",
+                    subtitle = "Non disponible (Phase 2)",
+                    icon = Icons.Default.SdCard,
+                    isEnabled = false,
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Support Carte SD disponible en Phase 2")
+                        }
+                    }
+                )
+            }
+
+            item {
+                SourceCard(
+                    title = "Clé USB",
+                    subtitle = "Non disponible (Phase 2)",
+                    icon = Icons.Default.Usb,
+                    isEnabled = false,
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Support Clé USB disponible en Phase 2")
+                        }
+                    }
+                )
+            }
+
+            // Section Connexions réseau
+            item {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Text(
+                    text = "Connexions réseau",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
+                )
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(Radius.card),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 0.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Aucune connexion configurée",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Ajout de connexion SMB disponible en Phase 3")
+                                }
+                            },
+                            shape = RoundedCornerShape(Radius.pill)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.small))
+                            Text("Ajouter une connexion", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Radius.card))
+            .clickable(onClick = onClick)
+            .alpha(if (isEnabled) 1.0f else 0.5f),
+        shape = RoundedCornerShape(Radius.card),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shadowElevation = if (isEnabled) 3.dp else 0.dp,
+        tonalElevation = if (isEnabled) 1.dp else 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isEnabled) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surface
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(Spacing.medium))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}

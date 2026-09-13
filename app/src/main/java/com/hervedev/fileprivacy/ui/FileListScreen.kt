@@ -43,6 +43,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -82,6 +83,7 @@ fun FileListScreen(
     navController: NavController,
     viewModel: FileListViewModel = viewModel()
 ) {
+    val sourceType = viewModel.sourceType
     val currentPath = viewModel.currentPath
     val fileItems by viewModel.fileItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -142,12 +144,12 @@ fun FileListScreen(
                         BreadcrumbBar(
                             currentPath = currentPath,
                             onItemClick = { targetPath ->
-                                val targetRoute = NavRoutes.fileListRoute(targetPath)
+                                val targetRoute = NavRoutes.fileListRoute(sourceType, targetPath)
                                 val popped = navController.popBackStack(targetRoute, inclusive = false)
                                 if (!popped) {
                                     val rootPath = Environment.getExternalStorageDirectory().absolutePath
                                     navController.navigate(targetRoute) {
-                                        popUpTo(NavRoutes.fileListRoute(rootPath)) { inclusive = false }
+                                        popUpTo(NavRoutes.fileListRoute(sourceType, rootPath)) { inclusive = false }
                                     }
                                 }
                             }
@@ -158,7 +160,7 @@ fun FileListScreen(
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Dossier parent"
+                                    contentDescription = "Retour"
                                 )
                             }
                         }
@@ -232,85 +234,85 @@ fun FileListScreen(
                         items(fileItems, key = { it.path }) { item ->
                             val isSelected = selectedPaths.contains(item.path)
 
-                        Box {
-                            FileListItem(
-                                item = item,
-                                isSelected = isSelected,
-                                isSelectionMode = isSelectionMode,
-                                onClick = {
-                                    if (isSelectionMode) {
-                                        viewModel.toggleSelection(item.path)
-                                    } else if (item.isDirectory) {
-                                        navController.navigate(NavRoutes.fileListRoute(item.path))
-                                    } else {
-                                        // TODO: Aperçu du fichier (Phase 6)
+                            Box {
+                                FileListItem(
+                                    item = item,
+                                    isSelected = isSelected,
+                                    isSelectionMode = isSelectionMode,
+                                    onClick = {
+                                        if (isSelectionMode) {
+                                            viewModel.toggleSelection(item.path)
+                                        } else if (item.isDirectory) {
+                                            navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
+                                        } else {
+                                            // TODO: Aperçu du fichier (Phase 6)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!isSelectionMode) {
+                                            menuExpandedItemPath = item.path
+                                        }
+                                    },
+                                    onInfoClick = {
+                                        itemForDetails = item
                                     }
-                                },
-                                onLongClick = {
-                                    if (!isSelectionMode) {
-                                        menuExpandedItemPath = item.path
-                                    }
-                                },
-                                onInfoClick = {
-                                    itemForDetails = item
-                                }
-                            )
+                                )
 
-                            DropdownMenu(
-                                expanded = (menuExpandedItemPath == item.path),
-                                onDismissRequest = { menuExpandedItemPath = null },
-                                shape = RoundedCornerShape(Radius.item)
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Renommer") },
-                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                    onClick = {
-                                        menuExpandedItemPath = null
-                                        itemToRename = item
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Supprimer") },
-                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                                    onClick = {
-                                        menuExpandedItemPath = null
-                                        itemToDelete = item
-                                    }
-                                )
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text("Copier") },
-                                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                                    onClick = {
-                                        menuExpandedItemPath = null
-                                        viewModel.copyItem(item)
-                                        scope.launch { snackbarHostState.showSnackbar("'${item.name}' copié dans le presse-papier") }
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Couper") },
-                                    leadingIcon = { Icon(Icons.Default.ContentCut, contentDescription = null) },
-                                    onClick = {
-                                        menuExpandedItemPath = null
-                                        viewModel.cutItem(item)
-                                        scope.launch { snackbarHostState.showSnackbar("'${item.name}' coupé dans le presse-papier") }
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Sélectionner") },
-                                    leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
-                                    onClick = {
-                                        menuExpandedItemPath = null
-                                        viewModel.toggleSelection(item.path)
-                                    }
-                                )
+                                DropdownMenu(
+                                    expanded = (menuExpandedItemPath == item.path),
+                                    onDismissRequest = { menuExpandedItemPath = null },
+                                    shape = RoundedCornerShape(Radius.item)
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Renommer") },
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        onClick = {
+                                            menuExpandedItemPath = null
+                                            itemToRename = item
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Supprimer") },
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                        onClick = {
+                                            menuExpandedItemPath = null
+                                            itemToDelete = item
+                                        }
+                                    )
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        text = { Text("Copier") },
+                                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                        onClick = {
+                                            menuExpandedItemPath = null
+                                            viewModel.copyItem(item)
+                                            scope.launch { snackbarHostState.showSnackbar("'${item.name}' copié dans le presse-papier") }
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Couper") },
+                                        leadingIcon = { Icon(Icons.Default.ContentCut, contentDescription = null) },
+                                        onClick = {
+                                            menuExpandedItemPath = null
+                                            viewModel.cutItem(item)
+                                            scope.launch { snackbarHostState.showSnackbar("'${item.name}' coupé dans le presse-papier") }
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Sélectionner") },
+                                        leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+                                        onClick = {
+                                            menuExpandedItemPath = null
+                                            viewModel.toggleSelection(item.path)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
     }
 
     // Dialogs

@@ -5,7 +5,10 @@ import android.os.Environment
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hervedev.fileprivacy.data.FtpFileSource
 import com.hervedev.fileprivacy.data.LocalFileSource
+import com.hervedev.fileprivacy.data.SmbFileSource
+import com.hervedev.fileprivacy.data.WebDavFileSource
 import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
@@ -19,12 +22,20 @@ class FileListViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val fileSystemProvider: FileSystemProvider = LocalFileSource()
+    val sourceType: String = savedStateHandle.get<String>("sourceType") ?: "local"
 
     private val encodedPath: String = savedStateHandle.get<String>("encodedPath")
         ?: Uri.encode(Environment.getExternalStorageDirectory().absolutePath)
 
     val currentPath: String = Uri.decode(encodedPath)
+
+    private val fileSystemProvider: FileSystemProvider = when (sourceType) {
+        "local" -> LocalFileSource()
+        "smb" -> SmbFileSource()
+        "ftp" -> FtpFileSource()
+        "webdav" -> WebDavFileSource()
+        else -> LocalFileSource()
+    }
 
     private val _fileItems = MutableStateFlow<List<FileItem>>(emptyList())
     val fileItems: StateFlow<List<FileItem>> = _fileItems.asStateFlow()

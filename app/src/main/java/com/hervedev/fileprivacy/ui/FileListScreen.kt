@@ -170,9 +170,7 @@ fun FileListScreen(
                             IconButton(
                                 onClick = {
                                     viewModel.pasteClipboard { _, message ->
-                                        if (message != null) {
-                                            scope.launch { snackbarHostState.showSnackbar(message) }
-                                        }
+                                        scope.launch { snackbarHostState.showSnackbar(message) }
                                     }
                                 }
                             ) {
@@ -331,9 +329,7 @@ fun FileListScreen(
             onConfirm = { newName ->
                 itemToRename = null
                 viewModel.renameFile(item, newName) { _, message ->
-                    if (message != null) {
-                        scope.launch { snackbarHostState.showSnackbar(message) }
-                    }
+                    scope.launch { snackbarHostState.showSnackbar(message) }
                 }
             }
         )
@@ -346,9 +342,7 @@ fun FileListScreen(
             onConfirm = {
                 itemToDelete = null
                 viewModel.deleteFile(item) { _, message ->
-                    if (message != null) {
-                        scope.launch { snackbarHostState.showSnackbar(message) }
-                    }
+                    scope.launch { snackbarHostState.showSnackbar(message) }
                 }
             }
         )
@@ -368,9 +362,7 @@ fun FileListScreen(
             onConfirm = { folderName ->
                 showCreateFolderDialog = false
                 viewModel.createFolder(folderName) { _, message ->
-                    if (message != null) {
-                        scope.launch { snackbarHostState.showSnackbar(message) }
-                    }
+                    scope.launch { snackbarHostState.showSnackbar(message) }
                 }
             }
         )

@@ -32,7 +32,7 @@ class FileListViewModel(
 
     private val fileSystemProvider: FileSystemProvider = when (sourceType) {
         "local", "external" -> LocalFileSource()
-        "smb" -> SmbFileSource()
+        "smb" -> SmbFileSource(serverAddress = "", shareName = "", username = "", password = "")
         "ftp" -> FtpFileSource()
         "webdav" -> WebDavFileSource()
         else -> LocalFileSource()

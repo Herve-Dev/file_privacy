@@ -1,9 +1,5 @@
 package com.hervedev.fileprivacy.data
 
-import jcifs.CIFSContext
-import jcifs.config.PropertyConfiguration
-import jcifs.context.BaseContext
-import jcifs.smb.NtlmPasswordAuthenticator
 import jcifs.smb.SmbAuthException
 import jcifs.smb.SmbException
 import jcifs.smb.SmbFile
@@ -12,7 +8,6 @@ import kotlinx.coroutines.withContext
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.util.Properties
 
 object SmbConnectionTester {
 
@@ -24,33 +19,21 @@ object SmbConnectionTester {
         port: Int = 445
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val props = Properties()
-            props.setProperty("jcifs.smb.client.responseTimeout", "10000")
-            props.setProperty("jcifs.smb.client.soTimeout", "10000")
-            props.setProperty("jcifs.smb.client.connTimeout", "10000")
-            props.setProperty("jcifs.smb.client.minVersion", "SMB202")
-            props.setProperty("jcifs.smb.client.maxVersion", "SMB311")
-
-            val config = PropertyConfiguration(props)
-            val baseContext = BaseContext(config)
-
-            val auth = if (username.isNotBlank()) {
-                NtlmPasswordAuthenticator("", username, password)
-            } else {
-                NtlmPasswordAuthenticator()
-            }
-
-            val cifsContext: CIFSContext = baseContext.withCredentials(auth)
-
-            val cleanAddress = serverAddress.trim().removePrefix("smb://").removeSuffix("/")
-            val cleanShare = shareName.trim().removePrefix("/").removeSuffix("/")
-            val smbUrl = "smb://$cleanAddress:$port/$cleanShare/"
+            val cifsContext = SmbUtils.createCifsContext(username, password)
+            val smbUrl = SmbUtils.buildSmbUrl(
+                serverAddress = serverAddress,
+                shareName = shareName,
+                relativePath = "",
+                port = port,
+                isDirectory = true
+            )
 
             val smbFile = SmbFile(smbUrl, cifsContext)
 
             if (smbFile.exists()) {
                 Result.success(Unit)
             } else {
+                val cleanShare = shareName.trim().removePrefix("/").removeSuffix("/")
                 Result.failure(Exception("Le partage '$cleanShare' n'existe pas ou n'est pas accessible."))
             }
         } catch (e: SmbAuthException) {

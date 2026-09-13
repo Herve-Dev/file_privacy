@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -16,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.hervedev.fileprivacy.ui.theme.Radius
 
 @Composable
 fun RenameDialog(
@@ -27,6 +29,7 @@ fun RenameDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
+        shape = RoundedCornerShape(Radius.dialog),
         onDismissRequest = onDismiss,
         title = { Text("Renommer") },
         text = {
@@ -81,6 +84,7 @@ fun DeleteConfirmationDialog(
     onConfirm: () -> Unit
 ) {
     AlertDialog(
+        shape = RoundedCornerShape(Radius.dialog),
         onDismissRequest = onDismiss,
         title = { Text("Confirmation de suppression") },
         text = { Text("Voulez-vous vraiment supprimer \"$itemName\" ? Cette action est irréversible.") },
@@ -107,6 +111,7 @@ fun CreateFolderDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
+        shape = RoundedCornerShape(Radius.dialog),
         onDismissRequest = onDismiss,
         title = { Text("Nouveau dossier") },
         text = {

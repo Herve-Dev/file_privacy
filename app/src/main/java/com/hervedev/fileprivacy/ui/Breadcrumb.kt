@@ -6,21 +6,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hervedev.fileprivacy.ui.theme.Radius
 import java.io.File
 
 data class BreadcrumbItem(
@@ -104,46 +109,54 @@ fun BreadcrumbBar(
         }
     }
 
-    LazyRow(
-        state = listState,
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.Start
+    Surface(
+        shape = RoundedCornerShape(Radius.pill),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier.padding(vertical = 4.dp)
     ) {
-        itemsIndexed(items, key = { _, item -> item.path }) { index, item ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (index > 0) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 2.dp)
-                    )
-                }
-
+        LazyRow(
+            state = listState,
+            verticalAlignment = Alignment.CenterVertically,
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            itemsIndexed(items, key = { _, item -> item.path }) { index, item ->
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable(enabled = !item.isCurrent) { onItemClick(item.path) }
-                        .padding(horizontal = 4.dp, vertical = 6.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (item.isRoot) {
+                    if (index > 0) {
                         Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Racine",
-                            tint = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(end = 4.dp)
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(horizontal = 2.dp)
                         )
                     }
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (item.isCurrent) FontWeight.Bold else FontWeight.Normal,
-                        color = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(Radius.pill))
+                            .clickable(enabled = !item.isCurrent) { onItemClick(item.path) }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        if (item.isRoot) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Racine",
+                                tint = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .padding(end = 4.dp)
+                            )
+                        }
+                        Text(
+                            text = item.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = if (item.isCurrent) FontWeight.Bold else FontWeight.Medium,
+                            color = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

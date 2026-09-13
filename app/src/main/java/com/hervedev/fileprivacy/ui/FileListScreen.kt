@@ -2,12 +2,24 @@ package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -31,11 +43,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -47,6 +59,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.domain.FileItem
@@ -55,6 +70,8 @@ import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.dialogs.FileDetailsDialog
 import com.hervedev.fileprivacy.ui.dialogs.RenameDialog
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
+import com.hervedev.fileprivacy.ui.theme.Radius
+import com.hervedev.fileprivacy.ui.theme.Spacing
 import com.hervedev.fileprivacy.ui.utils.humanReadableByteCountSI
 import com.hervedev.fileprivacy.ui.viewmodel.FileListViewModel
 import kotlinx.coroutines.launch
@@ -84,6 +101,7 @@ fun FileListScreen(
     var menuExpandedItemPath by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             if (isSelectionMode) {
@@ -91,7 +109,8 @@ fun FileListScreen(
                     title = {
                         Text(
                             text = "${selectedPaths.size} sélectionné(s)",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
@@ -167,7 +186,10 @@ fun FileListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showCreateFolderDialog = true }
+                onClick = { showCreateFolderDialog = true },
+                shape = RoundedCornerShape(Radius.card),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -189,11 +211,14 @@ fun FileListScreen(
                 Text(
                     text = "Dossier vide",
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small)
                 ) {
                     items(fileItems, key = { it.path }) { item ->
                         val isSelected = selectedPaths.contains(item.path)
@@ -224,7 +249,8 @@ fun FileListScreen(
 
                             DropdownMenu(
                                 expanded = (menuExpandedItemPath == item.path),
-                                onDismissRequest = { menuExpandedItemPath = null }
+                                onDismissRequest = { menuExpandedItemPath = null },
+                                shape = RoundedCornerShape(Radius.item)
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Renommer") },
@@ -271,7 +297,6 @@ fun FileListScreen(
                                 )
                             }
                         }
-                        HorizontalDivider()
                     }
                 }
             }
@@ -343,40 +368,75 @@ fun FileListItem(
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ListItem(
-        modifier = modifier.combinedClickable(
-            onClick = onClick,
-            onLongClick = onLongClick
-        ),
-        headlineContent = {
-            Text(
-                text = item.name,
-                style = MaterialTheme.typography.bodyLarge
-            )
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Radius.item))
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = RoundedCornerShape(Radius.item),
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
         },
-        supportingContent = {
-            if (!item.isDirectory) {
-                Text(
-                    text = humanReadableByteCountSI(item.sizeBytes),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        },
-        leadingContent = {
+        shadowElevation = if (isSelected) 6.dp else 3.dp,
+        tonalElevation = if (isSelected) 2.dp else 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.medium, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             if (isSelectionMode) {
                 Checkbox(
                     checked = isSelected,
-                    onCheckedChange = { onClick() }
+                    onCheckedChange = { onClick() },
+                    modifier = Modifier.padding(end = Spacing.small)
                 )
             } else {
-                Icon(
-                    imageVector = if (item.isDirectory) Icons.Default.Folder else Icons.Default.Description,
-                    contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
-                    tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (item.isDirectory) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                            else MaterialTheme.colorScheme.surface
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (item.isDirectory) Icons.Default.Folder else Icons.Default.Description,
+                        contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
+                        tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(Spacing.medium))
             }
-        },
-        trailingContent = {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                )
+                if (!item.isDirectory) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = humanReadableByteCountSI(item.sizeBytes),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             if (!isSelectionMode) {
                 IconButton(onClick = onInfoClick) {
                     Icon(
@@ -387,5 +447,5 @@ fun FileListItem(
                 }
             }
         }
-    )
+    }
 }

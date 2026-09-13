@@ -82,11 +82,13 @@ fun FileListScreen(
     navController: NavController,
     viewModel: FileListViewModel = viewModel()
 ) {
+    val connectionId = viewModel.connectionId
     val sourceType = viewModel.sourceType
     val currentPath = viewModel.currentPath
     val fileItems by viewModel.fileItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isStorageAccessible by viewModel.isStorageAccessible.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     val selectedPaths by viewModel.selectedPaths.collectAsState()
     val clipboardState by viewModel.clipboardState.collectAsState()
 
@@ -141,15 +143,27 @@ fun FileListScreen(
             } else {
                 TopAppBar(
                     title = {
+                        val rootPath = if (connectionId != null) "" else Environment.getExternalStorageDirectory().absolutePath
                         BreadcrumbBar(
                             currentPath = currentPath,
+                            rootPath = rootPath,
                             onItemClick = { targetPath ->
-                                val targetRoute = NavRoutes.fileListRoute(sourceType, targetPath)
+                                val targetRoute = if (connectionId != null) {
+                                    NavRoutes.smbListRoute(connectionId, targetPath)
+                                } else {
+                                    NavRoutes.fileListRoute(sourceType, targetPath)
+                                }
+
                                 val popped = navController.popBackStack(targetRoute, inclusive = false)
                                 if (!popped) {
-                                    val rootPath = Environment.getExternalStorageDirectory().absolutePath
-                                    navController.navigate(targetRoute) {
-                                        popUpTo(NavRoutes.fileListRoute(sourceType, rootPath)) { inclusive = false }
+                                    if (connectionId != null) {
+                                        navController.navigate(targetRoute) {
+                                            popUpTo(NavRoutes.smbListRoute(connectionId, "")) { inclusive = false }
+                                        }
+                                    } else {
+                                        navController.navigate(targetRoute) {
+                                            popUpTo(NavRoutes.fileListRoute(sourceType, rootPath)) { inclusive = false }
+                                        }
                                     }
                                 }
                             }
@@ -209,7 +223,7 @@ fun FileListScreen(
                 )
             } else if (!isStorageAccessible) {
                 Text(
-                    text = "Ce stockage n'est plus accessible",
+                    text = errorMessage ?: "Ce stockage n'est plus accessible",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
@@ -249,7 +263,11 @@ fun FileListScreen(
                                         if (isSelectionMode) {
                                             viewModel.toggleSelection(item.path)
                                         } else if (item.isDirectory) {
-                                            navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
+                                            if (connectionId != null) {
+                                                navController.navigate(NavRoutes.smbListRoute(connectionId, item.path))
+                                            } else {
+                                                navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
+                                            }
                                         } else {
                                             // TODO: Aperçu du fichier (Phase 6)
                                         }

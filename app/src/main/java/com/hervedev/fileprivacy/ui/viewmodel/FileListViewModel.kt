@@ -1,14 +1,17 @@
 package com.hervedev.fileprivacy.ui.viewmodel
 
+import android.app.Application
 import android.net.Uri
 import android.os.Environment
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hervedev.fileprivacy.data.CredentialStorage
 import com.hervedev.fileprivacy.data.FtpFileSource
 import com.hervedev.fileprivacy.data.LocalFileSource
 import com.hervedev.fileprivacy.data.SmbFileSource
 import com.hervedev.fileprivacy.data.WebDavFileSource
+import com.hervedev.fileprivacy.data.db.AppDatabase
 import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
@@ -20,23 +23,18 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class FileListViewModel(
+    application: Application,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
-    val sourceType: String = savedStateHandle.get<String>("sourceType") ?: "local"
+    val connectionId: Long? = savedStateHandle.get<Long>("connectionId")
+    val sourceType: String = savedStateHandle.get<String>("sourceType")
+        ?: if (connectionId != null) "smb" else "local"
 
     private val encodedPath: String = savedStateHandle.get<String>("encodedPath")
-        ?: Uri.encode(Environment.getExternalStorageDirectory().absolutePath)
+        ?: if (connectionId == null) Uri.encode(Environment.getExternalStorageDirectory().absolutePath) else ""
 
     val currentPath: String = Uri.decode(encodedPath)
-
-    private val fileSystemProvider: FileSystemProvider = when (sourceType) {
-        "local", "external" -> LocalFileSource()
-        "smb" -> SmbFileSource(serverAddress = "", shareName = "", username = "", password = "")
-        "ftp" -> FtpFileSource()
-        "webdav" -> WebDavFileSource()
-        else -> LocalFileSource()
-    }
 
     private val _fileItems = MutableStateFlow<List<FileItem>>(emptyList())
     val fileItems: StateFlow<List<FileItem>> = _fileItems.asStateFlow()
@@ -47,27 +45,90 @@ class FileListViewModel(
     private val _isStorageAccessible = MutableStateFlow(true)
     val isStorageAccessible: StateFlow<Boolean> = _isStorageAccessible.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaths: StateFlow<Set<String>> = _selectedPaths.asStateFlow()
 
     val clipboardState = FileClipboard.state
 
+    private var fileSystemProvider: FileSystemProvider? = null
+
     init {
-        loadFiles()
+        initProviderAndLoad()
+    }
+
+    private fun initProviderAndLoad() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                if (sourceType == "smb" && connectionId != null) {
+                    val db = AppDatabase.getInstance(getApplication())
+                    val dao = db.smbConnectionDao()
+                    val entity = dao.getById(connectionId)
+                    val credStorage = CredentialStorage(getApplication())
+                    val pwd = credStorage.getPassword(connectionId) ?: ""
+
+                    if (entity == null) {
+                        _isStorageAccessible.value = false
+                        _errorMessage.value = "La connexion SMB n'existe plus."
+                        _isLoading.value = false
+                        return@launch
+                    }
+
+                    fileSystemProvider = SmbFileSource(
+                        serverAddress = entity.serverAddress,
+                        shareName = entity.shareName,
+                        username = entity.username,
+                        password = pwd,
+                        port = entity.port
+                    )
+                } else {
+                    fileSystemProvider = when (sourceType) {
+                        "local", "external" -> LocalFileSource()
+                        "ftp" -> FtpFileSource()
+                        "webdav" -> WebDavFileSource()
+                        else -> LocalFileSource()
+                    }
+                }
+
+                loadFilesInternal()
+            } catch (e: Exception) {
+                _isStorageAccessible.value = false
+                _errorMessage.value = "Erreur d'initialisation de la source : ${e.localizedMessage}"
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private suspend fun loadFilesInternal() {
+        val provider = fileSystemProvider
+        if (provider == null) {
+            _isStorageAccessible.value = false
+            _isLoading.value = false
+            return
+        }
+
+        if (sourceType == "local" || sourceType == "external") {
+            val dir = File(currentPath)
+            if (!dir.exists()) {
+                _isStorageAccessible.value = false
+                _fileItems.value = emptyList()
+                _isLoading.value = false
+                return
+            }
+        }
+
+        _isStorageAccessible.value = true
+        _fileItems.value = provider.listFiles(currentPath)
+        _isLoading.value = false
     }
 
     fun loadFiles() {
         viewModelScope.launch {
             _isLoading.value = true
-            val dir = File(currentPath)
-            if (!dir.exists()) {
-                _isStorageAccessible.value = false
-                _fileItems.value = emptyList()
-            } else {
-                _isStorageAccessible.value = true
-                _fileItems.value = fileSystemProvider.listFiles(currentPath)
-            }
-            _isLoading.value = false
+            loadFilesInternal()
         }
     }
 
@@ -116,10 +177,11 @@ class FileListViewModel(
     fun renameFile(item: FileItem, newName: String, onResult: (Boolean, String) -> Unit) {
         val name = newName.trim()
         if (name.isEmpty() || name == item.name) return
+        val provider = fileSystemProvider ?: return
         viewModelScope.launch {
             _isLoading.value = true
-            val success = fileSystemProvider.renameFile(item.path, name)
-            loadFiles()
+            val success = provider.renameFile(item.path, name)
+            loadFilesInternal()
             if (success) {
                 onResult(true, "'${item.name}' renommé en '$name'")
             } else {
@@ -129,10 +191,11 @@ class FileListViewModel(
     }
 
     fun deleteFile(item: FileItem, onResult: (Boolean, String) -> Unit) {
+        val provider = fileSystemProvider ?: return
         viewModelScope.launch {
             _isLoading.value = true
-            val success = fileSystemProvider.deleteFile(item.path)
-            loadFiles()
+            val success = provider.deleteFile(item.path)
+            loadFilesInternal()
             if (success) {
                 onResult(true, "'${item.name}' supprimé")
             } else {
@@ -147,11 +210,12 @@ class FileListViewModel(
             onResult(false, "Le nom du dossier ne peut pas être vide")
             return
         }
-        val targetPath = "$currentPath/$name"
+        val provider = fileSystemProvider ?: return
+        val targetPath = if (currentPath.isEmpty()) name else "$currentPath/$name"
         viewModelScope.launch {
             _isLoading.value = true
-            val success = fileSystemProvider.createFolder(targetPath)
-            loadFiles()
+            val success = provider.createFolder(targetPath)
+            loadFilesInternal()
             if (success) {
                 onResult(true, "Dossier '$name' créé")
             } else {
@@ -163,6 +227,7 @@ class FileListViewModel(
     fun pasteClipboard(onResult: (Boolean, String) -> Unit) {
         val clipboard = FileClipboard.state.value ?: return
         if (clipboard.items.isEmpty()) return
+        val provider = fileSystemProvider ?: return
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -170,18 +235,18 @@ class FileListViewModel(
             val total = clipboard.items.size
 
             for (item in clipboard.items) {
-                val destPath = "$currentPath/${item.name}"
-                val success = fileSystemProvider.copyFile(item.path, destPath)
+                val destPath = if (currentPath.isEmpty()) item.name else "$currentPath/${item.name}"
+                val success = provider.copyFile(item.path, destPath)
                 if (success) {
                     countSuccess++
                     if (clipboard.mode == ClipboardMode.CUT) {
-                        fileSystemProvider.deleteFile(item.path)
+                        provider.deleteFile(item.path)
                     }
                 }
             }
 
             FileClipboard.clear()
-            loadFiles()
+            loadFilesInternal()
 
             if (countSuccess == total) {
                 onResult(true, "$countSuccess élément(s) collé(s) avec succès")

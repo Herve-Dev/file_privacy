@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -43,19 +47,39 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel()
 ) {
+    val externalVolumes by viewModel.externalVolumes.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshVolumes()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -102,32 +126,37 @@ fun HomeScreen(
                 )
             }
 
-            item {
-                SourceCard(
-                    title = "Carte SD",
-                    subtitle = "Non disponible (Phase 2)",
-                    icon = Icons.Default.SdCard,
-                    isEnabled = false,
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Support Carte SD disponible en Phase 2")
+            if (externalVolumes.isEmpty()) {
+                item {
+                    SourceCard(
+                        title = "Aucun stockage externe détecté",
+                        subtitle = "Branchez une carte SD ou une clé USB",
+                        icon = Icons.Default.SdCard,
+                        isEnabled = false,
+                        onClick = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Aucun stockage externe détecté")
+                            }
                         }
+                    )
+                }
+            } else {
+                items(externalVolumes, key = { it.path }) { volume ->
+                    val icon = if (volume.name.contains("USB", ignoreCase = true)) {
+                        Icons.Default.Usb
+                    } else {
+                        Icons.Default.SdCard
                     }
-                )
-            }
-
-            item {
-                SourceCard(
-                    title = "Clé USB",
-                    subtitle = "Non disponible (Phase 2)",
-                    icon = Icons.Default.Usb,
-                    isEnabled = false,
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Support Clé USB disponible en Phase 2")
+                    SourceCard(
+                        title = volume.name,
+                        subtitle = volume.path,
+                        icon = icon,
+                        isEnabled = true,
+                        onClick = {
+                            navController.navigate(NavRoutes.fileListRoute("external", volume.path))
                         }
-                    }
-                )
+                    )
+                }
             }
 
             // Section Connexions réseau

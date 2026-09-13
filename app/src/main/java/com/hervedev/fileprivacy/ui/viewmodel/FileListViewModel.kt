@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 
 class FileListViewModel(
     savedStateHandle: SavedStateHandle
@@ -30,7 +31,7 @@ class FileListViewModel(
     val currentPath: String = Uri.decode(encodedPath)
 
     private val fileSystemProvider: FileSystemProvider = when (sourceType) {
-        "local" -> LocalFileSource()
+        "local", "external" -> LocalFileSource()
         "smb" -> SmbFileSource()
         "ftp" -> FtpFileSource()
         "webdav" -> WebDavFileSource()
@@ -42,6 +43,9 @@ class FileListViewModel(
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isStorageAccessible = MutableStateFlow(true)
+    val isStorageAccessible: StateFlow<Boolean> = _isStorageAccessible.asStateFlow()
 
     private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaths: StateFlow<Set<String>> = _selectedPaths.asStateFlow()
@@ -55,7 +59,14 @@ class FileListViewModel(
     fun loadFiles() {
         viewModelScope.launch {
             _isLoading.value = true
-            _fileItems.value = fileSystemProvider.listFiles(currentPath)
+            val dir = File(currentPath)
+            if (!dir.exists()) {
+                _isStorageAccessible.value = false
+                _fileItems.value = emptyList()
+            } else {
+                _isStorageAccessible.value = true
+                _fileItems.value = fileSystemProvider.listFiles(currentPath)
+            }
             _isLoading.value = false
         }
     }

@@ -43,7 +43,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -87,6 +86,7 @@ fun FileListScreen(
     val currentPath = viewModel.currentPath
     val fileItems by viewModel.fileItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isStorageAccessible by viewModel.isStorageAccessible.collectAsState()
     val selectedPaths by viewModel.selectedPaths.collectAsState()
     val clipboardState by viewModel.clipboardState.collectAsState()
 
@@ -207,6 +207,14 @@ fun FileListScreen(
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else if (!isStorageAccessible) {
+                Text(
+                    text = "Ce stockage n'est plus accessible",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else if (fileItems.isEmpty()) {

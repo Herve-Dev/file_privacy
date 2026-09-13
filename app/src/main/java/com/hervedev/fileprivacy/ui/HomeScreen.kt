@@ -191,9 +191,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(Spacing.medium))
                         OutlinedButton(
                             onClick = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Ajout de connexion SMB disponible en Phase 3")
-                                }
+                                navController.navigate(NavRoutes.ADD_SMB_CONNECTION)
                             },
                             shape = RoundedCornerShape(Radius.pill)
                         ) {

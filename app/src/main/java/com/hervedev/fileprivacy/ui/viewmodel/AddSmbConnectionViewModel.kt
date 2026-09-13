@@ -4,12 +4,20 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hervedev.fileprivacy.data.CredentialStorage
+import com.hervedev.fileprivacy.data.SmbConnectionTester
 import com.hervedev.fileprivacy.data.db.AppDatabase
 import com.hervedev.fileprivacy.data.db.SmbConnectionEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+sealed class TestConnectionState {
+    object Idle : TestConnectionState()
+    object Testing : TestConnectionState()
+    object Success : TestConnectionState()
+    data class Error(val message: String) : TestConnectionState()
+}
 
 class AddSmbConnectionViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -41,6 +49,9 @@ class AddSmbConnectionViewModel(application: Application) : AndroidViewModel(app
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _testState = MutableStateFlow<TestConnectionState>(TestConnectionState.Idle)
+    val testState: StateFlow<TestConnectionState> = _testState.asStateFlow()
+
     fun onNameChange(value: String) {
         _name.value = value
         _errorMessage.value = null
@@ -49,23 +60,66 @@ class AddSmbConnectionViewModel(application: Application) : AndroidViewModel(app
     fun onServerAddressChange(value: String) {
         _serverAddress.value = value
         _errorMessage.value = null
+        _testState.value = TestConnectionState.Idle
     }
 
     fun onShareNameChange(value: String) {
         _shareName.value = value
         _errorMessage.value = null
+        _testState.value = TestConnectionState.Idle
     }
 
     fun onUsernameChange(value: String) {
         _username.value = value
+        _testState.value = TestConnectionState.Idle
     }
 
     fun onPasswordChange(value: String) {
         _password.value = value
+        _testState.value = TestConnectionState.Idle
     }
 
     fun onPortChange(value: String) {
         _port.value = value
+        _testState.value = TestConnectionState.Idle
+    }
+
+    fun testConnection() {
+        val trimmedAddress = _serverAddress.value.trim()
+        val trimmedShare = _shareName.value.trim().removePrefix("/").removeSuffix("/")
+
+        if (trimmedAddress.isEmpty() || trimmedShare.isEmpty()) {
+            _testState.value = TestConnectionState.Error("Veuillez saisir au moins l'adresse du serveur et le nom du partage pour tester.")
+            return
+        }
+
+        val portNumber = _port.value.trim().toIntOrNull() ?: 445
+
+        viewModelScope.launch {
+            _testState.value = TestConnectionState.Testing
+            val result = SmbConnectionTester.testSmbConnection(
+                serverAddress = trimmedAddress,
+                shareName = trimmedShare,
+                username = _username.value.trim(),
+                password = _password.value,
+                port = portNumber
+            )
+
+            result.fold(
+                onSuccess = {
+                    _testState.value = TestConnectionState.Success
+                },
+                onFailure = { exception ->
+                    _testState.value = TestConnectionState.Error(
+                        exception.message ?: "Échec de la connexion"
+                    )
+                }
+            )
+        }
+    }
+
+    fun resetTestState() {
+        _testState.value = TestConnectionState.Idle
     }
 
     fun saveConnection(onSuccess: () -> Unit) {

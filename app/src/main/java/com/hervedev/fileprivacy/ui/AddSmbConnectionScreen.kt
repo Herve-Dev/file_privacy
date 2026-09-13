@@ -1,11 +1,14 @@
 package com.hervedev.fileprivacy.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -45,6 +49,7 @@ import androidx.navigation.NavController
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
 import com.hervedev.fileprivacy.ui.viewmodel.AddSmbConnectionViewModel
+import com.hervedev.fileprivacy.ui.viewmodel.TestConnectionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +65,7 @@ fun AddSmbConnectionScreen(
     val port by viewModel.port.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val testState by viewModel.testState.collectAsState()
 
     var passwordVisible by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -67,6 +73,18 @@ fun AddSmbConnectionScreen(
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    LaunchedEffect(testState) {
+        when (val state = testState) {
+            is TestConnectionState.Success -> {
+                snackbarHostState.showSnackbar("Connexion réussie ✓")
+            }
+            is TestConnectionState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+            }
+            else -> {}
         }
     }
 
@@ -190,25 +208,52 @@ fun AddSmbConnectionScreen(
 
                     Spacer(modifier = Modifier.height(Spacing.large))
 
-                    Button(
-                        onClick = {
-                            viewModel.saveConnection {
-                                navController.popBackStack()
-                            }
-                        },
-                        enabled = !isSaving,
-                        shape = RoundedCornerShape(Radius.pill),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
                     ) {
-                        if (isSaving) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(end = Spacing.small)
-                            )
+                        OutlinedButton(
+                            onClick = { viewModel.testConnection() },
+                            enabled = (testState !is TestConnectionState.Testing) && !isSaving,
+                            shape = RoundedCornerShape(Radius.pill),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                        ) {
+                            if (testState is TestConnectionState.Testing) {
+                                CircularProgressIndicator(
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(end = Spacing.extraSmall)
+                                )
+                            }
+                            Text("Tester", fontWeight = FontWeight.Bold)
                         }
-                        Text("Enregistrer", fontWeight = FontWeight.Bold)
+
+                        Button(
+                            onClick = {
+                                viewModel.saveConnection {
+                                    navController.popBackStack()
+                                }
+                            },
+                            enabled = !isSaving && (testState !is TestConnectionState.Testing),
+                            shape = RoundedCornerShape(Radius.pill),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                        ) {
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(end = Spacing.extraSmall)
+                                )
+                            }
+                            Text("Enregistrer", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

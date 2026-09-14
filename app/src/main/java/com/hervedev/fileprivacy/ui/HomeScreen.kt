@@ -31,6 +31,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -59,11 +60,14 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hervedev.fileprivacy.data.StorageSpaceInfo
+import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.domain.SmbConnection
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.utils.humanReadableByteCountSI
 import com.hervedev.fileprivacy.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -92,6 +96,11 @@ fun HomeScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    val internalRootPath = remember { Environment.getExternalStorageDirectory().absolutePath }
+    val internalSpaceInfo = remember(internalRootPath) {
+        StorageVolumesHelper.getStorageSpaceInfo(internalRootPath)
     }
 
     Scaffold(
@@ -132,9 +141,9 @@ fun HomeScreen(
                     subtitle = "Mémoire du téléphone",
                     icon = Icons.Default.PhoneAndroid,
                     isEnabled = true,
+                    storageSpaceInfo = internalSpaceInfo,
                     onClick = {
-                        val rootPath = Environment.getExternalStorageDirectory().absolutePath
-                        navController.navigate(NavRoutes.fileListRoute("local", rootPath))
+                        navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                     }
                 )
             }
@@ -160,11 +169,15 @@ fun HomeScreen(
                     } else {
                         Icons.Default.SdCard
                     }
+                    val spaceInfo = remember(volume.path) {
+                        StorageVolumesHelper.getStorageSpaceInfo(volume.path)
+                    }
                     SourceCard(
                         title = volume.name,
                         subtitle = volume.path,
                         icon = icon,
                         isEnabled = true,
+                        storageSpaceInfo = spaceInfo,
                         onClick = {
                             navController.navigate(NavRoutes.fileListRoute("external", volume.path))
                         }
@@ -300,8 +313,9 @@ private fun SourceCard(
     icon: ImageVector,
     isEnabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    storageSpaceInfo: StorageSpaceInfo? = null
 ) {
     Surface(
         modifier = modifier
@@ -358,6 +372,29 @@ private fun SourceCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (storageSpaceInfo != null && storageSpaceInfo.totalBytes > 0) {
+                    val usedFormatted = humanReadableByteCountSI(storageSpaceInfo.usedBytes)
+                    val totalFormatted = humanReadableByteCountSI(storageSpaceInfo.totalBytes)
+                    val progress = (storageSpaceInfo.usedBytes.toFloat() / storageSpaceInfo.totalBytes.toFloat()).coerceIn(0f, 1f)
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "$usedFormatted utilisés sur $totalFormatted",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    )
+                }
             }
         }
     }

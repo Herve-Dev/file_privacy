@@ -2,6 +2,7 @@ package com.hervedev.fileprivacy.data
 
 import android.content.Context
 import android.os.Environment
+import android.os.StatFs
 import android.os.storage.StorageManager
 
 data class StorageVolumeInfo(
@@ -9,7 +10,29 @@ data class StorageVolumeInfo(
     val path: String
 )
 
+data class StorageSpaceInfo(
+    val totalBytes: Long,
+    val freeBytes: Long,
+    val usedBytes: Long
+)
+
 object StorageVolumesHelper {
+
+    fun getStorageSpaceInfo(path: String): StorageSpaceInfo? {
+        return try {
+            val statFs = StatFs(path)
+            val totalBytes = statFs.totalBytes
+            val freeBytes = statFs.availableBytes
+            val usedBytes = (totalBytes - freeBytes).coerceAtLeast(0L)
+            StorageSpaceInfo(
+                totalBytes = totalBytes,
+                freeBytes = freeBytes,
+                usedBytes = usedBytes
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     fun getExternalStorageVolumes(context: Context): List<StorageVolumeInfo> {
         val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as? StorageManager

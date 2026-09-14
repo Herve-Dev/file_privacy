@@ -12,4 +12,7 @@ interface FileSystemProvider {
     suspend fun restoreFromTrash(path: String): Boolean = false
     suspend fun listTrash(): List<FileItem> = emptyList()
     suspend fun permanentlyDelete(path: String): Boolean = deleteFile(path)
+
+    // Thumbnail preview
+    suspend fun findFirstImageThumbnail(folderPath: String, maxDepth: Int = 1): String? = null
 }

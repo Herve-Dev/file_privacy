@@ -10,6 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Locale
+
+private val IMAGE_EXTS = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "dng", "raw")
+
+private fun isImageFileName(filename: String): Boolean {
+    val dotIndex = filename.lastIndexOf('.')
+    if (dotIndex <= 0 || dotIndex == filename.length - 1) return false
+    val ext = filename.substring(dotIndex + 1).lowercase(Locale.getDefault())
+    return IMAGE_EXTS.contains(ext)
+}
 
 class LocalFileSource(private val context: Context? = null) : FileSystemProvider {
 
@@ -163,6 +173,39 @@ class LocalFileSource(private val context: Context? = null) : FileSystemProvider
             true
         } catch (_: Exception) {
             false
+        }
+    }
+
+    override suspend fun findFirstImageThumbnail(folderPath: String, maxDepth: Int): String? = withContext(Dispatchers.IO) {
+        try {
+            val dir = File(folderPath)
+            if (!dir.exists() || !dir.isDirectory) return@withContext null
+            val files = dir.listFiles() ?: return@withContext null
+
+            // 1. Scan direct files first
+            for (f in files) {
+                if (f.isFile && isImageFileName(f.name)) {
+                    return@withContext f.absolutePath
+                }
+            }
+
+            // 2. Scan direct subdirectories if maxDepth > 1
+            if (maxDepth > 1) {
+                for (f in files) {
+                    if (f.isDirectory) {
+                        val subFiles = f.listFiles() ?: continue
+                        for (sub in subFiles) {
+                            if (sub.isFile && isImageFileName(sub.name)) {
+                                return@withContext sub.absolutePath
+                            }
+                        }
+                    }
+                }
+            }
+
+            null
+        } catch (_: Exception) {
+            null
         }
     }
 }

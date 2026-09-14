@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.Checkbox
@@ -91,6 +93,7 @@ fun FileListScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val selectedPaths by viewModel.selectedPaths.collectAsState()
     val clipboardState by viewModel.clipboardState.collectAsState()
+    val isGridMode by viewModel.isGridMode.collectAsState()
 
     val isSelectionMode = selectedPaths.isNotEmpty()
     val canNavigateBack = navController.previousBackStackEntry != null
@@ -180,6 +183,14 @@ fun FileListScreen(
                         }
                     },
                     actions = {
+                        if (sourceType != "smb") {
+                            IconButton(onClick = { viewModel.toggleViewMode() }) {
+                                Icon(
+                                    imageVector = if (isGridMode) Icons.AutoMirrored.Filled.ViewList else Icons.Default.GridView,
+                                    contentDescription = if (isGridMode) "Afficher en liste" else "Afficher en grille"
+                                )
+                            }
+                        }
                         if (clipboardState?.items?.isNotEmpty() == true) {
                             IconButton(
                                 onClick = {
@@ -235,6 +246,44 @@ fun FileListScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.Center)
+                )
+            } else if (isGridMode && (sourceType == "local" || sourceType == "external")) {
+                FileGridView(
+                    fileItems = fileItems,
+                    selectedPaths = selectedPaths,
+                    isSelectionMode = isSelectionMode,
+                    sourceType = sourceType,
+                    onItemClick = { item ->
+                        if (isSelectionMode) {
+                            viewModel.toggleSelection(item.path)
+                        } else if (item.isDirectory) {
+                            if (connectionId != null) {
+                                navController.navigate(NavRoutes.smbListRoute(connectionId, item.path))
+                            } else {
+                                navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
+                            }
+                        } else {
+                            // TODO: Aperçu du fichier (Phase 6)
+                        }
+                    },
+                    onItemLongClick = { item ->
+                        if (!isSelectionMode) {
+                            menuExpandedItemPath = item.path
+                        }
+                    },
+                    onInfoClick = { item -> itemForDetails = item },
+                    onRenameClick = { item -> itemToRename = item },
+                    onDeleteClick = { item -> itemToDelete = item },
+                    onCopyClick = { item ->
+                        viewModel.copyItem(item)
+                        scope.launch { snackbarHostState.showSnackbar("'${item.name}' copié dans le presse-papier") }
+                    },
+                    onCutClick = { item ->
+                        viewModel.cutItem(item)
+                        scope.launch { snackbarHostState.showSnackbar("'${item.name}' coupé dans le presse-papier") }
+                    },
+                    onToggleSelection = { item -> viewModel.toggleSelection(item.path) },
+                    onFetchFolderThumbnail = { folderPath -> viewModel.getFolderThumbnail(folderPath) }
                 )
             } else {
                 Surface(

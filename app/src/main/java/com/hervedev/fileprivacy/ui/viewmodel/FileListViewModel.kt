@@ -16,9 +16,13 @@ import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.FileSystemProvider
+import com.hervedev.fileprivacy.domain.isImage
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -51,12 +55,32 @@ class FileListViewModel(
     private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaths: StateFlow<Set<String>> = _selectedPaths.asStateFlow()
 
+    private val _isGridMode = MutableStateFlow(false)
+    val isGridMode: StateFlow<Boolean> = _isGridMode.asStateFlow()
+
+    val hasImages: StateFlow<Boolean> = _fileItems
+        .map { items -> items.any { it.isImage() } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false
+        )
+
     val clipboardState = FileClipboard.state
 
     private var fileSystemProvider: FileSystemProvider? = null
 
     init {
         initProviderAndLoad()
+    }
+
+    fun toggleViewMode() {
+        _isGridMode.value = !_isGridMode.value
+    }
+
+    suspend fun getFolderThumbnail(folderPath: String): String? {
+        val provider = fileSystemProvider ?: return null
+        return provider.findFirstImageThumbnail(folderPath, maxDepth = 1)
     }
 
     private fun initProviderAndLoad() {

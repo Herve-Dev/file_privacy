@@ -21,6 +21,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
     private val smbConnectionDao = db.smbConnectionDao()
+    private val trashDao = db.trashEntryDao()
     private val credentialStorage = CredentialStorage(application)
 
     private val _externalVolumes = MutableStateFlow<List<StorageVolumeInfo>>(emptyList())
@@ -32,6 +33,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    val trashCount: StateFlow<Int> = trashDao.getCount()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
         )
 
     init {

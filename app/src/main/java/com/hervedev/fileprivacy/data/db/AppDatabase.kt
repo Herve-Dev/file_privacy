@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [SmbConnectionEntity::class],
-    version = 1,
+    entities = [SmbConnectionEntity::class, TrashEntryEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun smbConnectionDao(): SmbConnectionDao
+    abstract fun trashEntryDao(): TrashEntryDao
 
     companion object {
         @Volatile
@@ -24,7 +25,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "file_privacy_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

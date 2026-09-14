@@ -12,10 +12,12 @@ import androidx.navigation.navArgument
 import com.hervedev.fileprivacy.ui.AddSmbConnectionScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
 import com.hervedev.fileprivacy.ui.HomeScreen
+import com.hervedev.fileprivacy.ui.TrashScreen
 
 object NavRoutes {
     const val HOME = "home"
     const val ADD_SMB_CONNECTION = "addSmbConnection"
+    const val TRASH = "trash"
     const val FILE_LIST = "fileList/{sourceType}/{encodedPath}"
     const val FILE_LIST_SMB = "fileListSmb/{connectionId}/{encodedPath}"
 
@@ -42,6 +44,10 @@ fun AppNavigation(
 
         composable(route = NavRoutes.ADD_SMB_CONNECTION) {
             AddSmbConnectionScreen(navController = navController)
+        }
+
+        composable(route = NavRoutes.TRASH) {
+            TrashScreen(navController = navController)
         }
 
         composable(

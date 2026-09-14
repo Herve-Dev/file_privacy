@@ -86,10 +86,10 @@ class FileListViewModel(
                     )
                 } else {
                     fileSystemProvider = when (sourceType) {
-                        "local", "external" -> LocalFileSource()
+                        "local", "external" -> LocalFileSource(getApplication())
                         "ftp" -> FtpFileSource()
                         "webdav" -> WebDavFileSource()
-                        else -> LocalFileSource()
+                        else -> LocalFileSource(getApplication())
                     }
                 }
 
@@ -194,10 +194,15 @@ class FileListViewModel(
         val provider = fileSystemProvider ?: return
         viewModelScope.launch {
             _isLoading.value = true
-            val success = provider.deleteFile(item.path)
+            val success = if (sourceType == "local") {
+                provider.moveToTrash(item.path)
+            } else {
+                provider.deleteFile(item.path)
+            }
             loadFilesInternal()
             if (success) {
-                onResult(true, "'${item.name}' supprimé")
+                val message = if (sourceType == "local") "'${item.name}' déplacé vers la corbeille" else "'${item.name}' supprimé"
+                onResult(true, message)
             } else {
                 onResult(false, "Échec de la suppression de '${item.name}'")
             }

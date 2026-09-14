@@ -148,6 +148,19 @@ fun HomeScreen(
                 )
             }
 
+            item {
+                val trashCount by viewModel.trashCount.collectAsState()
+                SourceCard(
+                    title = "Corbeille",
+                    subtitle = if (trashCount > 0) "$trashCount élément(s) en corbeille" else "Corbeille vide",
+                    icon = Icons.Default.Delete,
+                    isEnabled = true,
+                    onClick = {
+                        navController.navigate(NavRoutes.TRASH)
+                    }
+                )
+            }
+
             if (externalVolumes.isEmpty()) {
                 item {
                     SourceCard(

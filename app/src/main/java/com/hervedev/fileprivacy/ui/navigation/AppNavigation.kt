@@ -30,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hervedev.fileprivacy.ui.AddSmbConnectionScreen
+import com.hervedev.fileprivacy.ui.CategoryResultScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
 import com.hervedev.fileprivacy.ui.HomeScreen
 import com.hervedev.fileprivacy.ui.PlaceholderScreen
@@ -43,10 +44,14 @@ object NavRoutes {
     const val REMOTE = "remote"
     const val SETTINGS = "settings"
 
+    const val CATEGORY_RESULT = "categoryResult/{categoryName}"
     const val ADD_SMB_CONNECTION = "addSmbConnection"
     const val TRASH = "trash"
     const val FILE_LIST = "fileList/{sourceType}/{encodedPath}"
     const val FILE_LIST_SMB = "fileListSmb/{connectionId}/{encodedPath}"
+
+    fun categoryResultRoute(categoryName: String): String =
+        "categoryResult/$categoryName"
 
     fun fileListRoute(sourceType: String, path: String): String =
         "fileList/$sourceType/${Uri.encode(path)}"
@@ -166,6 +171,15 @@ fun AppNavigation(
 
             composable(route = NavRoutes.SETTINGS) {
                 PlaceholderScreen(title = "Réglages")
+            }
+
+            composable(
+                route = NavRoutes.CATEGORY_RESULT,
+                arguments = listOf(
+                    navArgument("categoryName") { type = NavType.StringType }
+                )
+            ) {
+                CategoryResultScreen(navController = navController)
             }
 
             composable(route = NavRoutes.ADD_SMB_CONNECTION) {

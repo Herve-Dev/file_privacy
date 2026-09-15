@@ -33,11 +33,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +50,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.CategoryItemCard
@@ -65,13 +69,27 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val trashCount by viewModel.trashCount.collectAsState()
+    val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val isCategoriesEnabled by viewModel.isCategoriesEnabled.collectAsState()
+    val isScanningCategories by viewModel.isScanningCategories.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    var needsBackgroundRefresh by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
+            if (event == Lifecycle.Event.ON_STOP) {
+                needsBackgroundRefresh = true
+            } else if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshVolumes()
+                if (needsBackgroundRefresh) {
+                    viewModel.invalidateCache()
+                    viewModel.scanCategories(force = true)
+                    needsBackgroundRefresh = false
+                } else {
+                    viewModel.scanCategories(force = false)
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -87,6 +105,14 @@ fun HomeScreen(
 
     val usedGb = internalSpaceInfo?.let { it.usedBytes / (1024f * 1024f * 1024f) } ?: 0f
     val totalGb = internalSpaceInfo?.let { it.totalBytes / (1024f * 1024f * 1024f) } ?: 0f
+
+    fun getCountText(category: FileCategory): String {
+        return when {
+            !isCategoriesEnabled -> "Désactivé"
+            isScanningCategories -> "..."
+            else -> "${categoryCounts[category] ?: 0}"
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -116,238 +142,246 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = isScanningCategories,
+            onRefresh = { viewModel.scanCategories(force = true) },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+                .padding(paddingValues)
         ) {
-            // 1. Barre de recherche (visuelle, TODO: logique de recherche en 6.7)
-            item {
-                FileSearchBar(
-                    onSearchClick = {
-                        // TODO: Logique de recherche (Phase 6.7)
-                    },
-                    onSortClick = {
-                        // TODO: Logique de tri (Phase 6.7)
-                    }
-                )
-            }
-
-            // 2. Carte "Stockage appareil" résumée
-            item {
-                StorageOverviewCard(
-                    usedGb = usedGb,
-                    totalGb = totalGb,
-                    onSeeAllClick = {
-                        navController.navigate(NavRoutes.STORAGE)
-                    },
-                    modifier = Modifier.clickable {
-                        navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                    }
-                )
-            }
-
-            // 3. Grille 3 colonnes x 2 lignes pour les 6 catégories (visuelle, TODO: scan réel en 6.4)
-            item {
-                Text(
-                    text = "Catégories",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = Spacing.extraSmall)
-                )
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "Images",
-                                count = "—",
-                                icon = Icons.Outlined.Image,
-                                accentColor = FileTypeBadges.ImageAccent,
-                                bgColor = FileTypeBadges.ImageBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie Images (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "Vidéos",
-                                count = "—",
-                                icon = Icons.Outlined.Movie,
-                                accentColor = FileTypeBadges.VideoAccent,
-                                bgColor = FileTypeBadges.VideoBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie Vidéos (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "Audio",
-                                count = "—",
-                                icon = Icons.Outlined.AudioFile,
-                                accentColor = FileTypeBadges.AudioAccent,
-                                bgColor = FileTypeBadges.AudioBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie Audio (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "Documents",
-                                count = "—",
-                                icon = Icons.Outlined.Description,
-                                accentColor = FileTypeBadges.DocumentAccent,
-                                bgColor = FileTypeBadges.DocumentBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie Documents (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "Téléchargements",
-                                count = "—",
-                                icon = Icons.Outlined.Download,
-                                accentColor = FileTypeBadges.FolderAccent,
-                                bgColor = FileTypeBadges.FolderBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie Téléchargements (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            CategoryItemCard(
-                                title = "APK",
-                                count = "—",
-                                icon = Icons.Outlined.Android,
-                                accentColor = FileTypeBadges.ApkAccent,
-                                bgColor = FileTypeBadges.ApkBg,
-                                onClick = {
-                                    // TODO: Filtre catégorie APK (Phase 6.4)
-                                    navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 4. Section "Fichiers récents" (aperçu, TODO: scan réel en 6.5)
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Fichiers récents",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+            ) {
+                // 1. Barre de recherche (visuelle)
+                item {
+                    FileSearchBar(
+                        onSearchClick = {},
+                        onSortClick = {}
                     )
-                    Text(
-                        text = "Voir tout",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
+                }
+
+                // 2. Carte "Stockage appareil" résumée
+                item {
+                    StorageOverviewCard(
+                        usedGb = usedGb,
+                        totalGb = totalGb,
+                        onSeeAllClick = {
+                            navController.navigate(NavRoutes.STORAGE)
+                        },
                         modifier = Modifier.clickable {
-                            navController.navigate(NavRoutes.RECENTS)
+                            navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                         }
                     )
                 }
-            }
 
-            item {
-                AppCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(Radius.card)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.medium)
-                    ) {
-                        Text(
-                            text = "Bientôt disponible",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = Spacing.small)
-                        )
-                    }
-                }
-            }
-
-            // 5. Raccourci Corbeille
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // 3. Grille 3 colonnes x 2 lignes pour les 6 catégories avec compteurs réels
+                item {
                     Text(
-                        text = "Utilitaire",
+                        text = "Catégories",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = Spacing.extraSmall)
                     )
                 }
-            }
 
-            item {
-                AppCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { navController.navigate(NavRoutes.TRASH) },
-                    shape = RoundedCornerShape(Radius.card)
-                ) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "Images",
+                                    count = getCountText(FileCategory.IMAGES),
+                                    icon = Icons.Outlined.Image,
+                                    accentColor = FileTypeBadges.ImageAccent,
+                                    bgColor = FileTypeBadges.ImageBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.IMAGES.name))
+                                        }
+                                    }
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "Vidéos",
+                                    count = getCountText(FileCategory.VIDEOS),
+                                    icon = Icons.Outlined.Movie,
+                                    accentColor = FileTypeBadges.VideoAccent,
+                                    bgColor = FileTypeBadges.VideoBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.VIDEOS.name))
+                                        }
+                                    }
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "Audio",
+                                    count = getCountText(FileCategory.AUDIO),
+                                    icon = Icons.Outlined.AudioFile,
+                                    accentColor = FileTypeBadges.AudioAccent,
+                                    bgColor = FileTypeBadges.AudioBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.AUDIO.name))
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "Documents",
+                                    count = getCountText(FileCategory.DOCUMENTS),
+                                    icon = Icons.Outlined.Description,
+                                    accentColor = FileTypeBadges.DocumentAccent,
+                                    bgColor = FileTypeBadges.DocumentBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.DOCUMENTS.name))
+                                        }
+                                    }
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "Téléchargements",
+                                    count = getCountText(FileCategory.DOWNLOADS),
+                                    icon = Icons.Outlined.Download,
+                                    accentColor = FileTypeBadges.FolderAccent,
+                                    bgColor = FileTypeBadges.FolderBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.DOWNLOADS.name))
+                                        }
+                                    }
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                CategoryItemCard(
+                                    title = "APK",
+                                    count = getCountText(FileCategory.APK),
+                                    icon = Icons.Outlined.Android,
+                                    accentColor = FileTypeBadges.ApkAccent,
+                                    bgColor = FileTypeBadges.ApkBg,
+                                    onClick = {
+                                        if (isCategoriesEnabled) {
+                                            navController.navigate(NavRoutes.categoryResultRoute(FileCategory.APK.name))
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 4. Section "Fichiers récents" (aperçu)
+                item {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.medium),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Delete,
-                            contentDescription = "Corbeille",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .padding(end = 4.dp)
+                        Text(
+                            text = "Fichiers récents",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
+                        Text(
+                            text = "Voir tout",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable {
+                                navController.navigate(NavRoutes.RECENTS)
+                            }
+                        )
+                    }
+                }
 
-                        Spacer(modifier = Modifier.width(Spacing.medium))
+                item {
+                    AppCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(Radius.card)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium)
+                        ) {
+                            Text(
+                                text = "Bientôt disponible",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = Spacing.small)
+                            )
+                        }
+                    }
+                }
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Corbeille",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                // 5. Raccourci Corbeille
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Utilitaire",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                item {
+                    AppCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate(NavRoutes.TRASH) },
+                        shape = RoundedCornerShape(Radius.card)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = "Corbeille",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .padding(end = 4.dp)
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = if (trashCount > 0) "$trashCount élément(s)" else "Vide",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+
+                            Spacer(modifier = Modifier.width(Spacing.medium))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Corbeille",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (trashCount > 0) "$trashCount élément(s)" else "Vide",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }

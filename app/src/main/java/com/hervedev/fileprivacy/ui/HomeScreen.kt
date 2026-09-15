@@ -1,6 +1,7 @@
 package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,11 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +48,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.CategoryItemCard
 import com.hervedev.fileprivacy.ui.components.FileSearchBar
 import com.hervedev.fileprivacy.ui.components.StorageOverviewCard
@@ -59,6 +64,7 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel = viewModel()
 ) {
+    val trashCount by viewModel.trashCount.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -117,32 +123,39 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
-            // 1. Barre de recherche
+            // 1. Barre de recherche (visuelle, TODO: logique de recherche en 6.7)
             item {
                 FileSearchBar(
-                    onSearchClick = {},
-                    onSortClick = {}
+                    onSearchClick = {
+                        // TODO: Logique de recherche (Phase 6.7)
+                    },
+                    onSortClick = {
+                        // TODO: Logique de tri (Phase 6.7)
+                    }
                 )
             }
 
-            // 2. Vue d'ensemble du stockage
+            // 2. Carte "Stockage appareil" résumée
             item {
                 StorageOverviewCard(
                     usedGb = usedGb,
                     totalGb = totalGb,
                     onSeeAllClick = {
+                        navController.navigate(NavRoutes.STORAGE)
+                    },
+                    modifier = Modifier.clickable {
                         navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                     }
                 )
             }
 
-            // 3. Grille 3 colonnes x 2 lignes pour les 6 catégories
+            // 3. Grille 3 colonnes x 2 lignes pour les 6 catégories (visuelle, TODO: scan réel en 6.4)
             item {
                 Text(
                     text = "Catégories",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.extraSmall)
+                    modifier = Modifier.padding(top = Spacing.extraSmall)
                 )
             }
 
@@ -160,6 +173,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.ImageAccent,
                                 bgColor = FileTypeBadges.ImageBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie Images (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -172,6 +186,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.VideoAccent,
                                 bgColor = FileTypeBadges.VideoBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie Vidéos (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -184,6 +199,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.AudioAccent,
                                 bgColor = FileTypeBadges.AudioBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie Audio (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -202,6 +218,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.DocumentAccent,
                                 bgColor = FileTypeBadges.DocumentBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie Documents (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -214,6 +231,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.FolderAccent,
                                 bgColor = FileTypeBadges.FolderBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie Téléchargements (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -226,6 +244,7 @@ fun HomeScreen(
                                 accentColor = FileTypeBadges.ApkAccent,
                                 bgColor = FileTypeBadges.ApkBg,
                                 onClick = {
+                                    // TODO: Filtre catégorie APK (Phase 6.4)
                                     navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
                                 }
                             )
@@ -234,23 +253,34 @@ fun HomeScreen(
                 }
             }
 
-            // 4. Fichiers récents dans une carte arrondie avec séparateurs de 1.dp
+            // 4. Section "Fichiers récents" (aperçu, TODO: scan réel en 6.5)
             item {
-                Spacer(modifier = Modifier.height(Spacing.small))
-                Text(
-                    text = "Fichiers récents",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = Spacing.extraSmall)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Fichiers récents",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Voir tout",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable {
+                            navController.navigate(NavRoutes.RECENTS)
+                        }
+                    )
+                }
             }
 
             item {
-                Surface(
+                AppCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(Radius.card),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 1.dp
+                    shape = RoundedCornerShape(Radius.card)
                 ) {
                     Column(
                         modifier = Modifier
@@ -258,11 +288,67 @@ fun HomeScreen(
                             .padding(Spacing.medium)
                     ) {
                         Text(
-                            text = "Aucun fichier récent",
+                            text = "Bientôt disponible",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = Spacing.small)
                         )
+                    }
+                }
+            }
+
+            // 5. Raccourci Corbeille
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Utilitaire",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            item {
+                AppCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate(NavRoutes.TRASH) },
+                    shape = RoundedCornerShape(Radius.card)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Corbeille",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .padding(end = 4.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Corbeille",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (trashCount > 0) "$trashCount élément(s)" else "Vide",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }

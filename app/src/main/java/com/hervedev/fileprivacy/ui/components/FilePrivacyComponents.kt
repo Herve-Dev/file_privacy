@@ -40,15 +40,12 @@ fun FileSearchBar(
     onSortClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .height(42.dp)
             .clickable(onClick = onSearchClick),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shadowElevation = 0.dp
+        shape = RoundedCornerShape(14.dp)
     ) {
         Row(
             modifier = Modifier
@@ -104,12 +101,9 @@ fun StorageOverviewCard(
 ) {
     val progress = if (totalGb > 0f) (usedGb / totalGb).coerceIn(0f, 1f) else 0f
 
-    Surface(
+    AppCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Radius.card),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp,
-        tonalElevation = 1.dp
+        shape = RoundedCornerShape(Radius.card)
     ) {
         Column(
             modifier = Modifier
@@ -212,13 +206,12 @@ fun CategoryItemCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(Radius.card),
-        color = bgColor,
-        shadowElevation = 0.dp
+        containerColor = bgColor
     ) {
         Column(
             modifier = Modifier

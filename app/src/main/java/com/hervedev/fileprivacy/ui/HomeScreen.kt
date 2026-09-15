@@ -79,6 +79,7 @@ fun HomeScreen(
 ) {
     val externalVolumes by viewModel.externalVolumes.collectAsState()
     val smbConnections by viewModel.smbConnections.collectAsState()
+    val trashCount by viewModel.trashCount.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -125,7 +126,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
             verticalArrangement = Arrangement.spacedBy(Spacing.small)
         ) {
-            // Section Stockage
+            // 1. Section Stockage
             item {
                 Text(
                     text = "Stockage",
@@ -144,19 +145,6 @@ fun HomeScreen(
                     storageSpaceInfo = internalSpaceInfo,
                     onClick = {
                         navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
-                    }
-                )
-            }
-
-            item {
-                val trashCount by viewModel.trashCount.collectAsState()
-                SourceCard(
-                    title = "Corbeille",
-                    subtitle = if (trashCount > 0) "$trashCount élément(s) en corbeille" else "Corbeille vide",
-                    icon = Icons.Default.Delete,
-                    isEnabled = true,
-                    onClick = {
-                        navController.navigate(NavRoutes.TRASH)
                     }
                 )
             }
@@ -198,7 +186,30 @@ fun HomeScreen(
                 }
             }
 
-            // Section Connexions réseau
+            // 2. Section Utilitaires
+            item {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Text(
+                    text = "Utilitaires",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
+                )
+            }
+
+            item {
+                SourceCard(
+                    title = "Corbeille",
+                    subtitle = if (trashCount > 0) "$trashCount élément(s)" else "Vide",
+                    icon = Icons.Default.Delete,
+                    isEnabled = true,
+                    onClick = {
+                        navController.navigate(NavRoutes.TRASH)
+                    }
+                )
+            }
+
+            // 3. Section Connexions réseau
             item {
                 Spacer(modifier = Modifier.height(Spacing.medium))
                 Text(

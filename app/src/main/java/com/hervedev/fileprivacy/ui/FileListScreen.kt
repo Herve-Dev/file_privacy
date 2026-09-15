@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -102,9 +103,14 @@ fun FileListScreen(
     val scope = rememberCoroutineScope()
 
     var itemToRename by remember { mutableStateOf<FileItem?>(null) }
-    var itemToDelete by remember { mutableStateOf<FileItem?>(null) }
+    var itemToTrash by remember { mutableStateOf<FileItem?>(null) }
+    var itemToPermanentlyDelete by remember { mutableStateOf<FileItem?>(null) }
     var itemForDetails by remember { mutableStateOf<FileItem?>(null) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
+
+    var showBatchTrashDialog by remember { mutableStateOf(false) }
+    var showBatchPermanentDeleteDialog by remember { mutableStateOf(false) }
+
     var menuExpandedItemPath by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -140,6 +146,22 @@ fun FileListScreen(
                             scope.launch { snackbarHostState.showSnackbar("Éléments coupés dans le presse-papier") }
                         }) {
                             Icon(Icons.Default.ContentCut, contentDescription = "Couper")
+                        }
+                        IconButton(onClick = { showBatchTrashDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = if (sourceType == "local") "Mettre à la corbeille" else "Supprimer",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        if (sourceType == "local") {
+                            IconButton(onClick = { showBatchPermanentDeleteDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteForever,
+                                    contentDescription = "Supprimer définitivement",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 )
@@ -273,7 +295,16 @@ fun FileListScreen(
                     },
                     onInfoClick = { item -> itemForDetails = item },
                     onRenameClick = { item -> itemToRename = item },
-                    onDeleteClick = { item -> itemToDelete = item },
+                    onDeleteClick = { item ->
+                        if (sourceType == "local") {
+                            viewModel.deleteFile(item) { _, message ->
+                                scope.launch { snackbarHostState.showSnackbar(message) }
+                            }
+                        } else {
+                            itemToTrash = item
+                        }
+                    },
+                    onPermanentlyDeleteClick = { item -> itemToPermanentlyDelete = item },
                     onCopyClick = { item ->
                         viewModel.copyItem(item)
                         scope.launch { snackbarHostState.showSnackbar("'${item.name}' copié dans le presse-papier") }
@@ -334,7 +365,7 @@ fun FileListScreen(
                                 DropdownMenu(
                                     expanded = (menuExpandedItemPath == item.path),
                                     onDismissRequest = { menuExpandedItemPath = null },
-                                    shape = RoundedCornerShape(Radius.item)
+                                    shape = RoundedCornerShape(Radius.card)
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Renommer") },
@@ -345,13 +376,60 @@ fun FileListScreen(
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Supprimer") },
-                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                        text = { Text("Infos") },
+                                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
-                                            itemToDelete = item
+                                            itemForDetails = item
                                         }
                                     )
+                                    if (sourceType == "local") {
+                                        DropdownMenuItem(
+                                            text = { Text("Mettre à la corbeille", color = MaterialTheme.colorScheme.error) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            },
+                                            onClick = {
+                                                menuExpandedItemPath = null
+                                                viewModel.deleteFile(item) { _, message ->
+                                                    scope.launch { snackbarHostState.showSnackbar(message) }
+                                                }
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Supprimer définitivement", color = MaterialTheme.colorScheme.error) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.DeleteForever,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            },
+                                            onClick = {
+                                                menuExpandedItemPath = null
+                                                itemToPermanentlyDelete = item
+                                            }
+                                        )
+                                    } else {
+                                        DropdownMenuItem(
+                                            text = { Text("Supprimer", color = MaterialTheme.colorScheme.error) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            },
+                                            onClick = {
+                                                menuExpandedItemPath = null
+                                                itemToTrash = item
+                                            }
+                                        )
+                                    }
                                     HorizontalDivider()
                                     DropdownMenuItem(
                                         text = { Text("Copier") },
@@ -402,13 +480,65 @@ fun FileListScreen(
         )
     }
 
-    itemToDelete?.let { item ->
+    itemToTrash?.let { item ->
         DeleteConfirmationDialog(
             itemName = item.name,
-            onDismiss = { itemToDelete = null },
+            title = "Supprimer l'élément ?",
+            message = "Voulez-vous vraiment supprimer \"${item.name}\" ?",
+            onDismiss = { itemToTrash = null },
             onConfirm = {
-                itemToDelete = null
+                itemToTrash = null
                 viewModel.deleteFile(item) { _, message ->
+                    scope.launch { snackbarHostState.showSnackbar(message) }
+                }
+            }
+        )
+    }
+
+    itemToPermanentlyDelete?.let { item ->
+        DeleteConfirmationDialog(
+            itemName = item.name,
+            title = "Supprimer définitivement ?",
+            message = "Voulez-vous vraiment supprimer définitivement \"${item.name}\" ? Cette action est définitive et irréversible.",
+            confirmButtonText = "Supprimer",
+            onDismiss = { itemToPermanentlyDelete = null },
+            onConfirm = {
+                itemToPermanentlyDelete = null
+                viewModel.permanentlyDeleteFile(item) { _, message ->
+                    scope.launch { snackbarHostState.showSnackbar(message) }
+                }
+            }
+        )
+    }
+
+    if (showBatchTrashDialog) {
+        val count = selectedPaths.size
+        val isLocal = sourceType == "local"
+        DeleteConfirmationDialog(
+            itemName = "$count élément(s)",
+            title = if (isLocal) "Mettre à la corbeille ?" else "Supprimer les éléments ?",
+            message = if (isLocal) "Voulez-vous déplacer $count élément(s) vers la corbeille ?" else "Voulez-vous vraiment supprimer $count élément(s) ?",
+            onDismiss = { showBatchTrashDialog = false },
+            onConfirm = {
+                showBatchTrashDialog = false
+                viewModel.deleteSelected(permanently = false) { _, message ->
+                    scope.launch { snackbarHostState.showSnackbar(message) }
+                }
+            }
+        )
+    }
+
+    if (showBatchPermanentDeleteDialog) {
+        val count = selectedPaths.size
+        DeleteConfirmationDialog(
+            itemName = "$count élément(s)",
+            title = "Supprimer définitivement ?",
+            message = "Voulez-vous supprimer définitivement $count élément(s) ? Cette action est définitive et irréversible.",
+            confirmButtonText = "Supprimer",
+            onDismiss = { showBatchPermanentDeleteDialog = false },
+            onConfirm = {
+                showBatchPermanentDeleteDialog = false
+                viewModel.deleteSelected(permanently = true) { _, message ->
                     scope.launch { snackbarHostState.showSnackbar(message) }
                 }
             }

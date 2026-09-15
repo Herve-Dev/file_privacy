@@ -233,6 +233,63 @@ class FileListViewModel(
         }
     }
 
+    fun permanentlyDeleteFile(item: FileItem, onResult: (Boolean, String) -> Unit) {
+        val provider = fileSystemProvider ?: return
+        viewModelScope.launch {
+            _isLoading.value = true
+            val success = if (sourceType == "local") {
+                provider.permanentlyDelete(item.path)
+            } else {
+                provider.deleteFile(item.path)
+            }
+            loadFilesInternal()
+            if (success) {
+                onResult(true, "'${item.name}' supprimé définitivement")
+            } else {
+                onResult(false, "Échec de la suppression de '${item.name}'")
+            }
+        }
+    }
+
+    fun deleteSelected(permanently: Boolean, onResult: (Boolean, String) -> Unit) {
+        val provider = fileSystemProvider ?: return
+        val itemsToDelete = _fileItems.value.filter { _selectedPaths.value.contains(it.path) }
+        if (itemsToDelete.isEmpty()) return
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            var successCount = 0
+            val total = itemsToDelete.size
+
+            for (item in itemsToDelete) {
+                val success = if (!permanently && sourceType == "local") {
+                    provider.moveToTrash(item.path)
+                } else if (sourceType == "local") {
+                    provider.permanentlyDelete(item.path)
+                } else {
+                    provider.deleteFile(item.path)
+                }
+                if (success) successCount++
+            }
+
+            clearSelection()
+            loadFilesInternal()
+
+            if (successCount == total) {
+                val message = if (!permanently && sourceType == "local") {
+                    "$total élément(s) déplacé(s) vers la corbeille"
+                } else {
+                    "$total élément(s) supprimé(s) définitivement"
+                }
+                onResult(true, message)
+            } else if (successCount > 0) {
+                onResult(false, "$successCount/$total élément(s) supprimé(s)")
+            } else {
+                onResult(false, "Échec de la suppression")
+            }
+        }
+    }
+
     fun createFolder(folderName: String, onResult: (Boolean, String) -> Unit) {
         val name = folderName.trim()
         if (name.isEmpty()) {

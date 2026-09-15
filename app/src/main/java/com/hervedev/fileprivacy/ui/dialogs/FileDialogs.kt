@@ -95,6 +95,9 @@ fun RenameDialog(
 @Composable
 fun DeleteConfirmationDialog(
     itemName: String,
+    title: String = "Supprimer l'élément ?",
+    message: String = "Voulez-vous vraiment supprimer \"$itemName\" ?",
+    confirmButtonText: String = "Supprimer",
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -104,14 +107,14 @@ fun DeleteConfirmationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Supprimer l'élément ?",
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Text(
-                text = "Voulez-vous vraiment supprimer \"$itemName\" ? Cette action est définitive et irréversible.",
+                text = message,
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -124,7 +127,7 @@ fun DeleteConfirmationDialog(
                 ),
                 shape = RoundedCornerShape(Radius.pill)
             ) {
-                Text("Supprimer", fontWeight = FontWeight.Bold)
+                Text(confirmButtonText, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

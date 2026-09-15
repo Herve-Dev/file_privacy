@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -71,6 +72,7 @@ fun FileGridView(
     onInfoClick: (FileItem) -> Unit,
     onRenameClick: (FileItem) -> Unit,
     onDeleteClick: (FileItem) -> Unit,
+    onPermanentlyDeleteClick: (FileItem) -> Unit,
     onCopyClick: (FileItem) -> Unit,
     onCutClick: (FileItem) -> Unit,
     onToggleSelection: (FileItem) -> Unit,
@@ -116,16 +118,8 @@ fun FileGridView(
                     DropdownMenu(
                         expanded = (menuExpandedItemPath == item.path),
                         onDismissRequest = { menuExpandedItemPath = null },
-                        shape = RoundedCornerShape(Radius.item)
+                        shape = RoundedCornerShape(Radius.card)
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Informations") },
-                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
-                            onClick = {
-                                menuExpandedItemPath = null
-                                onInfoClick(item)
-                            }
-                        )
                         DropdownMenuItem(
                             text = { Text("Renommer") },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
@@ -135,13 +129,58 @@ fun FileGridView(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Supprimer") },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                            text = { Text("Infos") },
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
-                                onDeleteClick(item)
+                                onInfoClick(item)
                             }
                         )
+                        if (sourceType == "local") {
+                            DropdownMenuItem(
+                                text = { Text("Mettre à la corbeille", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = {
+                                    menuExpandedItemPath = null
+                                    onDeleteClick(item)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Supprimer définitivement", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.DeleteForever,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = {
+                                    menuExpandedItemPath = null
+                                    onPermanentlyDeleteClick(item)
+                                }
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("Supprimer", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = {
+                                    menuExpandedItemPath = null
+                                    onDeleteClick(item)
+                                }
+                            )
+                        }
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Copier") },

@@ -110,8 +110,7 @@ fun HomeScreen(
                 title = {
                     Text(
                         text = "FilePrivacy",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineMedium
                     )
                 }
             )
@@ -129,7 +128,6 @@ fun HomeScreen(
                 Text(
                     text = "Stockage",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -190,7 +188,6 @@ fun HomeScreen(
                 Text(
                     text = "Utilitaires",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -213,7 +210,6 @@ fun HomeScreen(
                 Text(
                     text = "Connexions réseau",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -375,8 +371,7 @@ private fun SourceCard(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))

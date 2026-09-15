@@ -124,7 +124,7 @@ fun TrashScreen(
                         .fillMaxSize()
                         .padding(horizontal = Spacing.medium, vertical = Spacing.small),
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shadowElevation = 0.dp
                 ) {
                     LazyColumn(
@@ -230,7 +230,7 @@ private fun TrashItemCard(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(Radius.item),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 3.dp,
         tonalElevation = 1.dp
     ) {

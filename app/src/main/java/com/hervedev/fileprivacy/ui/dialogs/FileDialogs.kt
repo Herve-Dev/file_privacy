@@ -33,7 +33,7 @@ fun RenameDialog(
 
     AlertDialog(
         shape = RoundedCornerShape(Radius.dialog),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -103,7 +103,7 @@ fun DeleteConfirmationDialog(
 ) {
     AlertDialog(
         shape = RoundedCornerShape(Radius.dialog),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -152,7 +152,7 @@ fun CreateFolderDialog(
 
     AlertDialog(
         shape = RoundedCornerShape(Radius.dialog),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = {
             Text(

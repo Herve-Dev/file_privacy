@@ -46,7 +46,7 @@ fun FileDetailsDialog(
 
     AlertDialog(
         shape = RoundedCornerShape(Radius.dialog),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = {
             Text(

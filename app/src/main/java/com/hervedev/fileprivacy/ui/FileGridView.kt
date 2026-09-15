@@ -87,7 +87,7 @@ fun FileGridView(
             .fillMaxSize()
             .padding(horizontal = Spacing.medium, vertical = Spacing.small),
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         shadowElevation = 0.dp
     ) {
         LazyVerticalGrid(
@@ -250,7 +250,7 @@ private fun FileGridItem(
         color = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceContainer
         },
         shadowElevation = if (isSelected) 6.dp else 2.dp,
         tonalElevation = if (isSelected) 2.dp else 1.dp

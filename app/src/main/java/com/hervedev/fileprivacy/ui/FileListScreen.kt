@@ -320,7 +320,7 @@ fun FileListScreen(
                         .fillMaxSize()
                         .padding(horizontal = Spacing.medium, vertical = Spacing.small),
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shadowElevation = 0.dp,
                     tonalElevation = 0.dp
                 ) {
@@ -587,7 +587,7 @@ fun FileListItem(
         color = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceContainer
         },
         shadowElevation = if (isSelected) 6.dp else 3.dp,
         tonalElevation = if (isSelected) 2.dp else 1.dp

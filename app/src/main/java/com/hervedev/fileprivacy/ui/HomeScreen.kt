@@ -110,7 +110,8 @@ fun HomeScreen(
                 title = {
                     Text(
                         text = "FilePrivacy",
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             )
@@ -128,6 +129,7 @@ fun HomeScreen(
                 Text(
                     text = "Stockage",
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -188,6 +190,7 @@ fun HomeScreen(
                 Text(
                     text = "Utilitaires",
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -210,6 +213,7 @@ fun HomeScreen(
                 Text(
                     text = "Connexions réseau",
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = Spacing.medium, bottom = Spacing.small)
                 )
             }
@@ -219,7 +223,7 @@ fun HomeScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(Radius.card),
-                        color = MaterialTheme.colorScheme.surface,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
                         shadowElevation = 0.dp
                     ) {
                         Column(
@@ -345,7 +349,7 @@ private fun SourceCard(
             )
             .alpha(if (isEnabled) 1.0f else 0.5f),
         shape = RoundedCornerShape(Radius.card),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = if (isEnabled) 3.dp else 0.dp,
         tonalElevation = if (isEnabled) 1.dp else 0.dp
     ) {

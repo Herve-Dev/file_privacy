@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.CreateFolderDialog
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.dialogs.FileDetailsDialog
@@ -575,7 +576,7 @@ fun FileListItem(
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.item))
@@ -584,13 +585,11 @@ fun FileListItem(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(Radius.item),
-        color = if (isSelected) {
+        containerColor = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
-        shadowElevation = if (isSelected) 6.dp else 3.dp,
-        tonalElevation = if (isSelected) 2.dp else 1.dp
+            MaterialTheme.colorScheme.surface
+        }
     ) {
         Row(
             modifier = Modifier

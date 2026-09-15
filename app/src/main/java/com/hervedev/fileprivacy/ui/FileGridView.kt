@@ -57,6 +57,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.DuotoneFolderIcon
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
@@ -237,7 +238,7 @@ private fun FileGridItem(
         }
     }
 
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
@@ -247,13 +248,11 @@ private fun FileGridItem(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(Radius.item),
-        color = if (isSelected) {
+        containerColor = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
-        shadowElevation = if (isSelected) 6.dp else 2.dp,
-        tonalElevation = if (isSelected) 2.dp else 1.dp
+            MaterialTheme.colorScheme.surface
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isImageFile || folderThumbnailPath != null) {

@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -61,6 +60,7 @@ import androidx.navigation.NavController
 import com.hervedev.fileprivacy.data.StorageSpaceInfo
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.domain.SmbConnection
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.theme.Radius
@@ -220,11 +220,9 @@ fun HomeScreen(
 
             if (smbConnections.isEmpty()) {
                 item {
-                    Surface(
+                    AppCard(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(Radius.card),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        shadowElevation = 0.dp
+                        shape = RoundedCornerShape(Radius.card)
                     ) {
                         Column(
                             modifier = Modifier
@@ -339,7 +337,7 @@ private fun SourceCard(
     onLongClick: (() -> Unit)? = null,
     storageSpaceInfo: StorageSpaceInfo? = null
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.card))
@@ -348,10 +346,7 @@ private fun SourceCard(
                 onLongClick = onLongClick
             )
             .alpha(if (isEnabled) 1.0f else 0.5f),
-        shape = RoundedCornerShape(Radius.card),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shadowElevation = if (isEnabled) 3.dp else 0.dp,
-        tonalElevation = if (isEnabled) 1.dp else 0.dp
+        shape = RoundedCornerShape(Radius.card)
     ) {
         Row(
             modifier = Modifier

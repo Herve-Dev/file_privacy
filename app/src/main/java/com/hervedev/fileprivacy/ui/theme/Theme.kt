@@ -12,41 +12,47 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryBlueDark,
-    onPrimary = Color(0xFF002B75),
-    primaryContainer = Color(0xFF0044B3),
-    onPrimaryContainer = Color(0xFFD6E4FF),
-    background = DarkBackground,
-    onBackground = Color(0xFFE6E8EE),
-    surface = DarkSurface,
-    onSurface = Color(0xFFE6E8EE),
-    surfaceContainerLowest = DarkSurfaceContainerLowest,
-    surfaceContainerLow = DarkSurfaceContainerLow,
-    surfaceContainer = DarkSurfaceContainer,
-    surfaceContainerHigh = DarkSurfaceContainerHigh,
-    surfaceContainerHighest = DarkSurfaceContainerHighest,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = Color(0xFFC0C5D0),
-    outlineVariant = Color(0xFF343B48)
+    primary = PrimaryDark,
+    onPrimary = Color.White,
+    primaryContainer = PrimaryBgDark,
+    onPrimaryContainer = PrimaryDark,
+    background = BackgroundDark,
+    onBackground = TextMainDark,
+    surface = SurfaceDark,
+    onSurface = TextMainDark,
+    surfaceContainerLowest = BackgroundDark,
+    surfaceContainerLow = SurfaceDark,
+    surfaceContainer = SurfaceDark,
+    surfaceContainerHigh = SurfaceDark,
+    surfaceContainerHighest = SurfaceDark,
+    surfaceVariant = SurfaceDark,
+    onSurfaceVariant = TextSecondaryDark,
+    outline = TextTertiaryDark,
+    outlineVariant = BorderDark,
+    error = ErrorRed,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryBlue,
+    primary = PrimaryLight,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE5F0FF),
-    onPrimaryContainer = Color(0xFF003899),
-    background = LightBackground,
-    onBackground = Color(0xFF16191E),
-    surface = LightSurface,
-    onSurface = Color(0xFF16191E),
-    surfaceContainerLowest = LightSurfaceContainerLowest,
-    surfaceContainerLow = LightSurfaceContainerLow,
-    surfaceContainer = LightSurfaceContainer,
-    surfaceContainerHigh = LightSurfaceContainerHigh,
-    surfaceContainerHighest = LightSurfaceContainerHighest,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = Color(0xFF424752),
-    outlineVariant = Color(0xFFD4DAE4)
+    primaryContainer = PrimaryBgLight,
+    onPrimaryContainer = PrimaryLight,
+    background = BackgroundLight,
+    onBackground = TextMainLight,
+    surface = SurfaceLight,
+    onSurface = TextMainLight,
+    surfaceContainerLowest = BackgroundLight,
+    surfaceContainerLow = SurfaceLight,
+    surfaceContainer = SurfaceLight,
+    surfaceContainerHigh = SurfaceLight,
+    surfaceContainerHighest = SurfaceLight,
+    surfaceVariant = SurfaceLight,
+    onSurfaceVariant = TextSecondaryLight,
+    outline = TextTertiaryLight,
+    outlineVariant = BorderLight,
+    error = ErrorRed,
+    onError = Color.White
 )
 
 @Composable
@@ -60,7 +66,6 @@ fun FilePrivacyTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

@@ -2,7 +2,6 @@ package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,15 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.SdCard
-import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.SdCard
+import androidx.compose.material.icons.outlined.Usb
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -140,7 +138,7 @@ fun HomeScreen(
                 SourceCard(
                     title = "Stockage interne",
                     subtitle = "Mémoire du téléphone",
-                    icon = Icons.Default.PhoneAndroid,
+                    icon = Icons.Outlined.PhoneAndroid,
                     isEnabled = true,
                     storageSpaceInfo = internalSpaceInfo,
                     onClick = {
@@ -154,7 +152,7 @@ fun HomeScreen(
                     SourceCard(
                         title = "Aucun stockage externe détecté",
                         subtitle = "Branchez une carte SD ou une clé USB",
-                        icon = Icons.Default.SdCard,
+                        icon = Icons.Outlined.SdCard,
                         isEnabled = false,
                         onClick = {
                             scope.launch {
@@ -166,9 +164,9 @@ fun HomeScreen(
             } else {
                 items(externalVolumes, key = { it.path }) { volume ->
                     val icon = if (volume.name.contains("USB", ignoreCase = true)) {
-                        Icons.Default.Usb
+                        Icons.Outlined.Usb
                     } else {
-                        Icons.Default.SdCard
+                        Icons.Outlined.SdCard
                     }
                     val spaceInfo = remember(volume.path) {
                         StorageVolumesHelper.getStorageSpaceInfo(volume.path)
@@ -201,7 +199,7 @@ fun HomeScreen(
                 SourceCard(
                     title = "Corbeille",
                     subtitle = if (trashCount > 0) "$trashCount élément(s)" else "Vide",
-                    icon = Icons.Default.Delete,
+                    icon = Icons.Outlined.Delete,
                     isEnabled = true,
                     onClick = {
                         navController.navigate(NavRoutes.TRASH)
@@ -247,7 +245,7 @@ fun HomeScreen(
                                 shape = RoundedCornerShape(Radius.pill)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Add,
+                                    imageVector = Icons.Outlined.Add,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -263,7 +261,7 @@ fun HomeScreen(
                         SourceCard(
                             title = connection.name,
                             subtitle = "${connection.serverAddress}/${connection.shareName}",
-                            icon = Icons.Default.Dns,
+                            icon = Icons.Outlined.Dns,
                             isEnabled = true,
                             onClick = {
                                 navController.navigate(NavRoutes.smbListRoute(connection.id, ""))
@@ -280,7 +278,7 @@ fun HomeScreen(
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Supprimer") },
-                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
                                 onClick = {
                                     menuExpandedConnectionId = null
                                     connectionToDelete = connection
@@ -303,7 +301,7 @@ fun HomeScreen(
                             shape = RoundedCornerShape(Radius.pill)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Add,
+                                imageVector = Icons.Outlined.Add,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -361,23 +359,14 @@ private fun SourceCard(
                 .padding(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isEnabled) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surface
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
+                    .size(32.dp)
+                    .padding(end = 4.dp)
+            )
 
             Spacer(modifier = Modifier.width(Spacing.medium))
 

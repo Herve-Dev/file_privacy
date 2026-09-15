@@ -2,7 +2,6 @@ package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,25 +17,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ViewList
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ContentCut
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -128,28 +126,28 @@ fun FileListScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = { viewModel.clearSelection() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Annuler la sélection")
+                            Icon(Icons.Outlined.Close, contentDescription = "Annuler la sélection")
                         }
                     },
                     actions = {
                         IconButton(onClick = { viewModel.selectAll() }) {
-                            Icon(Icons.Default.SelectAll, contentDescription = "Tout sélectionner")
+                            Icon(Icons.Outlined.SelectAll, contentDescription = "Tout sélectionner")
                         }
                         IconButton(onClick = {
                             viewModel.copySelected()
                             scope.launch { snackbarHostState.showSnackbar("Éléments copiés dans le presse-papier") }
                         }) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copier")
+                            Icon(Icons.Outlined.ContentCopy, contentDescription = "Copier")
                         }
                         IconButton(onClick = {
                             viewModel.cutSelected()
                             scope.launch { snackbarHostState.showSnackbar("Éléments coupés dans le presse-papier") }
                         }) {
-                            Icon(Icons.Default.ContentCut, contentDescription = "Couper")
+                            Icon(Icons.Outlined.ContentCut, contentDescription = "Couper")
                         }
                         IconButton(onClick = { showBatchTrashDialog = true }) {
                             Icon(
-                                imageVector = Icons.Default.Delete,
+                                imageVector = Icons.Outlined.Delete,
                                 contentDescription = if (sourceType == "local") "Mettre à la corbeille" else "Supprimer",
                                 tint = MaterialTheme.colorScheme.error
                             )
@@ -157,7 +155,7 @@ fun FileListScreen(
                         if (sourceType == "local") {
                             IconButton(onClick = { showBatchPermanentDeleteDialog = true }) {
                                 Icon(
-                                    imageVector = Icons.Default.DeleteForever,
+                                    imageVector = Icons.Outlined.DeleteForever,
                                     contentDescription = "Supprimer définitivement",
                                     tint = MaterialTheme.colorScheme.error
                                 )
@@ -198,7 +196,7 @@ fun FileListScreen(
                         if (canNavigateBack) {
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                                     contentDescription = "Retour"
                                 )
                             }
@@ -208,7 +206,7 @@ fun FileListScreen(
                         if (sourceType != "smb") {
                             IconButton(onClick = { viewModel.toggleViewMode() }) {
                                 Icon(
-                                    imageVector = if (isGridMode) Icons.AutoMirrored.Filled.ViewList else Icons.Default.GridView,
+                                    imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,
                                     contentDescription = if (isGridMode) "Afficher en liste" else "Afficher en grille"
                                 )
                             }
@@ -222,7 +220,7 @@ fun FileListScreen(
                                 }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ContentPaste,
+                                    imageVector = Icons.Outlined.ContentPaste,
                                     contentDescription = "Coller"
                                 )
                             }
@@ -239,7 +237,7 @@ fun FileListScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Icons.Outlined.Add,
                     contentDescription = "Créer un dossier"
                 )
             }
@@ -369,7 +367,7 @@ fun FileListScreen(
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Renommer") },
-                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
                                             itemToRename = item
@@ -377,7 +375,7 @@ fun FileListScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Infos") },
-                                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
                                             itemForDetails = item
@@ -388,7 +386,7 @@ fun FileListScreen(
                                             text = { Text("Mettre à la corbeille", color = MaterialTheme.colorScheme.error) },
                                             leadingIcon = {
                                                 Icon(
-                                                    Icons.Default.Delete,
+                                                    Icons.Outlined.Delete,
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.error
                                                 )
@@ -404,7 +402,7 @@ fun FileListScreen(
                                             text = { Text("Supprimer définitivement", color = MaterialTheme.colorScheme.error) },
                                             leadingIcon = {
                                                 Icon(
-                                                    Icons.Default.DeleteForever,
+                                                    Icons.Outlined.DeleteForever,
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.error
                                                 )
@@ -419,7 +417,7 @@ fun FileListScreen(
                                             text = { Text("Supprimer", color = MaterialTheme.colorScheme.error) },
                                             leadingIcon = {
                                                 Icon(
-                                                    Icons.Default.Delete,
+                                                    Icons.Outlined.Delete,
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.error
                                                 )
@@ -433,7 +431,7 @@ fun FileListScreen(
                                     HorizontalDivider()
                                     DropdownMenuItem(
                                         text = { Text("Copier") },
-                                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.ContentCopy, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
                                             viewModel.copyItem(item)
@@ -442,7 +440,7 @@ fun FileListScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Couper") },
-                                        leadingIcon = { Icon(Icons.Default.ContentCut, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.ContentCut, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
                                             viewModel.cutItem(item)
@@ -451,7 +449,7 @@ fun FileListScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Sélectionner") },
-                                        leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.CheckCircle, contentDescription = null) },
                                         onClick = {
                                             menuExpandedItemPath = null
                                             viewModel.toggleSelection(item.path)
@@ -607,23 +605,14 @@ fun FileListItem(
                     modifier = Modifier.padding(end = Spacing.small)
                 )
             } else {
-                Box(
+                Icon(
+                    imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
+                    contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
+                    tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (item.isDirectory) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                            else MaterialTheme.colorScheme.surface
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (item.isDirectory) Icons.Default.Folder else Icons.Default.Description,
-                        contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
-                        tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                        .size(30.dp)
+                        .padding(end = 4.dp)
+                )
                 Spacer(modifier = Modifier.width(Spacing.medium))
             }
 
@@ -649,7 +638,7 @@ fun FileListItem(
             if (!isSelectionMode) {
                 IconButton(onClick = onInfoClick) {
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        imageVector = Icons.Outlined.Info,
                         contentDescription = "Informations",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )

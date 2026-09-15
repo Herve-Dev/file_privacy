@@ -20,15 +20,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ContentCut
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -57,6 +57,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.ui.components.DuotoneFolderIcon
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
 import java.io.File
@@ -122,7 +123,7 @@ fun FileGridView(
                     ) {
                         DropdownMenuItem(
                             text = { Text("Renommer") },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
                                 onRenameClick(item)
@@ -130,7 +131,7 @@ fun FileGridView(
                         )
                         DropdownMenuItem(
                             text = { Text("Infos") },
-                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
                                 onInfoClick(item)
@@ -141,7 +142,7 @@ fun FileGridView(
                                 text = { Text("Mettre à la corbeille", color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(
-                                        Icons.Default.Delete,
+                                        Icons.Outlined.Delete,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.error
                                     )
@@ -155,7 +156,7 @@ fun FileGridView(
                                 text = { Text("Supprimer définitivement", color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(
-                                        Icons.Default.DeleteForever,
+                                        Icons.Outlined.DeleteForever,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.error
                                     )
@@ -170,7 +171,7 @@ fun FileGridView(
                                 text = { Text("Supprimer", color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(
-                                        Icons.Default.Delete,
+                                        Icons.Outlined.Delete,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.error
                                     )
@@ -184,7 +185,7 @@ fun FileGridView(
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Copier") },
-                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.ContentCopy, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
                                 onCopyClick(item)
@@ -192,7 +193,7 @@ fun FileGridView(
                         )
                         DropdownMenuItem(
                             text = { Text("Couper") },
-                            leadingIcon = { Icon(Icons.Default.ContentCut, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.ContentCut, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
                                 onCutClick(item)
@@ -200,7 +201,7 @@ fun FileGridView(
                         )
                         DropdownMenuItem(
                             text = { Text("Sélectionner") },
-                            leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.CheckCircle, contentDescription = null) },
                             onClick = {
                                 menuExpandedItemPath = null
                                 onToggleSelection(item)
@@ -279,7 +280,7 @@ private fun FileGridItem(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Folder,
+                            imageVector = Icons.Outlined.Folder,
                             contentDescription = "Dossier",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
@@ -318,21 +319,14 @@ private fun FileGridItem(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (item.isDirectory) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                                else MaterialTheme.colorScheme.surface
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    if (item.isDirectory) {
+                        DuotoneFolderIcon(size = 42.dp)
+                    } else {
                         Icon(
-                            imageVector = if (item.isDirectory) Icons.Default.Folder else Icons.Default.Description,
-                            contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
-                            tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(26.dp)
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = "Fichier",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 

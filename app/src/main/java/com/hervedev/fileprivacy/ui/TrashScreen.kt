@@ -1,7 +1,6 @@
 package com.hervedev.fileprivacy.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,15 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -90,7 +88,7 @@ fun TrashScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Retour"
                         )
                     }
@@ -99,7 +97,7 @@ fun TrashScreen(
                     if (trashEntries.isNotEmpty()) {
                         IconButton(onClick = { showEmptyTrashDialog = true }) {
                             Icon(
-                                imageVector = Icons.Default.DeleteSweep,
+                                imageVector = Icons.Outlined.DeleteSweep,
                                 contentDescription = "Vider la corbeille"
                             )
                         }
@@ -145,11 +143,11 @@ fun TrashScreen(
                                 DropdownMenu(
                                     expanded = (menuExpandedEntryId == entry.id),
                                     onDismissRequest = { menuExpandedEntryId = null },
-                                    shape = RoundedCornerShape(Radius.item)
+                                    shape = RoundedCornerShape(Radius.card)
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Restaurer") },
-                                        leadingIcon = { Icon(Icons.Default.Restore, contentDescription = null) },
+                                        leadingIcon = { Icon(Icons.Outlined.Restore, contentDescription = null) },
                                         onClick = {
                                             menuExpandedEntryId = null
                                             viewModel.restoreItem(entry) { _, message ->
@@ -158,8 +156,14 @@ fun TrashScreen(
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Supprimer définitivement") },
-                                        leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null) },
+                                        text = { Text("Supprimer définitivement", color = MaterialTheme.colorScheme.error) },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Outlined.DeleteForever,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        },
                                         onClick = {
                                             menuExpandedEntryId = null
                                             entryToDelete = entry
@@ -178,6 +182,9 @@ fun TrashScreen(
     entryToDelete?.let { entry ->
         DeleteConfirmationDialog(
             itemName = entry.fileName,
+            title = "Supprimer définitivement ?",
+            message = "Voulez-vous supprimer définitivement \"${entry.fileName}\" ? Cette action est irréversible.",
+            confirmButtonText = "Supprimer",
             onDismiss = { entryToDelete = null },
             onConfirm = {
                 entryToDelete = null
@@ -192,6 +199,9 @@ fun TrashScreen(
     if (showEmptyTrashDialog) {
         DeleteConfirmationDialog(
             itemName = "tous les éléments de la corbeille",
+            title = "Vider la corbeille ?",
+            message = "Voulez-vous supprimer définitivement tous les éléments de la corbeille ? Cette action est irréversible.",
+            confirmButtonText = "Vider",
             onDismiss = { showEmptyTrashDialog = false },
             onConfirm = {
                 showEmptyTrashDialog = false
@@ -230,23 +240,14 @@ private fun TrashItemCard(
                 .padding(horizontal = Spacing.medium, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+            Icon(
+                imageVector = if (entry.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
+                contentDescription = if (entry.isDirectory) "Dossier" else "Fichier",
+                tint = if (entry.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (entry.isDirectory) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                        else MaterialTheme.colorScheme.surface
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (entry.isDirectory) Icons.Default.Folder else Icons.Default.Description,
-                    contentDescription = if (entry.isDirectory) "Dossier" else "Fichier",
-                    tint = if (entry.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    .size(30.dp)
+                    .padding(end = 4.dp)
+            )
 
             Spacer(modifier = Modifier.width(Spacing.medium))
 

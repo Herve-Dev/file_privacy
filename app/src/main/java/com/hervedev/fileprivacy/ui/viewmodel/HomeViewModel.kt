@@ -8,10 +8,12 @@ import com.hervedev.fileprivacy.data.CategoryScanner
 import com.hervedev.fileprivacy.data.CredentialStorage
 import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.PreferencesStorage
+import com.hervedev.fileprivacy.data.RecentFilesScanner
 import com.hervedev.fileprivacy.data.StorageVolumeInfo
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.data.db.AppDatabase
 import com.hervedev.fileprivacy.data.db.SmbConnectionEntity
+import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.SmbConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,8 +38,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _categoryCounts = MutableStateFlow<Map<FileCategory, Int>>(emptyMap())
     val categoryCounts: StateFlow<Map<FileCategory, Int>> = _categoryCounts.asStateFlow()
 
+    private val _recentFiles = MutableStateFlow<List<FileItem>>(emptyList())
+    val recentFiles: StateFlow<List<FileItem>> = _recentFiles.asStateFlow()
+
     private val _isCategoriesEnabled = MutableStateFlow(preferencesStorage.categoriesEnabled)
     val isCategoriesEnabled: StateFlow<Boolean> = _isCategoriesEnabled.asStateFlow()
+
+    private val _isRecentsEnabled = MutableStateFlow(preferencesStorage.recentsEnabled)
+    val isRecentsEnabled: StateFlow<Boolean> = _isRecentsEnabled.asStateFlow()
 
     private val _isScanningCategories = MutableStateFlow(false)
     val isScanningCategories: StateFlow<Boolean> = _isScanningCategories.asStateFlow()
@@ -68,6 +76,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val volumes = StorageVolumesHelper.getExternalStorageVolumes(getApplication())
         _externalVolumes.value = volumes
         _isCategoriesEnabled.value = preferencesStorage.categoriesEnabled
+        _isRecentsEnabled.value = preferencesStorage.recentsEnabled
     }
 
     fun invalidateCache() {
@@ -75,8 +84,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun scanCategories(force: Boolean = false) {
-        if (!preferencesStorage.categoriesEnabled) {
+        val catEnabled = preferencesStorage.categoriesEnabled
+        val recEnabled = preferencesStorage.recentsEnabled
+
+        if (!catEnabled && !recEnabled) {
             _categoryCounts.value = emptyMap()
+            _recentFiles.value = emptyList()
             return
         }
 
@@ -87,14 +100,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             _isScanningCategories.value = true
             val rootPath = Environment.getExternalStorageDirectory().absolutePath
-            val map = mutableMapOf<FileCategory, Int>()
 
-            for (category in FileCategory.entries) {
-                val list = CategoryScanner.scanCategory(category, rootPath)
-                map[category] = list.size
+            if (catEnabled) {
+                val map = mutableMapOf<FileCategory, Int>()
+                for (category in FileCategory.entries) {
+                    val list = CategoryScanner.scanCategory(category, rootPath)
+                    map[category] = list.size
+                }
+                _categoryCounts.value = map
+            } else {
+                _categoryCounts.value = emptyMap()
             }
 
-            _categoryCounts.value = map
+            if (recEnabled) {
+                val recents = RecentFilesScanner.scanRecentFiles(rootPath, limit = 3)
+                _recentFiles.value = recents
+            } else {
+                _recentFiles.value = emptyList()
+            }
+
             hasScannedOnce = true
             _isScanningCategories.value = false
         }

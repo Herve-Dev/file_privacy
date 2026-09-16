@@ -34,6 +34,7 @@ import com.hervedev.fileprivacy.ui.CategoryResultScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
 import com.hervedev.fileprivacy.ui.HomeScreen
 import com.hervedev.fileprivacy.ui.PlaceholderScreen
+import com.hervedev.fileprivacy.ui.RecentsScreen
 import com.hervedev.fileprivacy.ui.RemoteConnectionsScreen
 import com.hervedev.fileprivacy.ui.TrashScreen
 
@@ -162,7 +163,7 @@ fun AppNavigation(
             }
 
             composable(route = NavRoutes.RECENTS) {
-                PlaceholderScreen(title = "Récents")
+                RecentsScreen(navController = navController)
             }
 
             composable(route = NavRoutes.REMOTE) {

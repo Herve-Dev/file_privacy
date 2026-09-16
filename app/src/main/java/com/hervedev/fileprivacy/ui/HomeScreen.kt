@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +71,9 @@ fun HomeScreen(
 ) {
     val trashCount by viewModel.trashCount.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val recentFiles by viewModel.recentFiles.collectAsState()
     val isCategoriesEnabled by viewModel.isCategoriesEnabled.collectAsState()
+    val isRecentsEnabled by viewModel.isRecentsEnabled.collectAsState()
     val isScanningCategories by viewModel.isScanningCategories.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -286,7 +289,7 @@ fun HomeScreen(
                     }
                 }
 
-                // 4. Section "Fichiers récents" (aperçu)
+                // 4. Section "Fichiers récents" (aperçu réels)
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -318,14 +321,40 @@ fun HomeScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(Spacing.medium)
+                                .padding(Spacing.small)
                         ) {
-                            Text(
-                                text = "Bientôt disponible",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(vertical = Spacing.small)
-                            )
+                            if (!isRecentsEnabled) {
+                                Text(
+                                    text = "Désactivé dans les réglages",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(Spacing.medium)
+                                )
+                            } else if (recentFiles.isEmpty()) {
+                                Text(
+                                    text = "Aucun fichier récent",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(Spacing.medium)
+                                )
+                            } else {
+                                recentFiles.forEachIndexed { index, fileItem ->
+                                    if (index > 0) {
+                                        HorizontalDivider(
+                                            thickness = 1.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant
+                                        )
+                                    }
+                                    FileListItem(
+                                        item = fileItem,
+                                        isSelected = false,
+                                        isSelectionMode = false,
+                                        onClick = {},
+                                        onLongClick = {},
+                                        onInfoClick = {}
+                                    )
+                                }
+                            }
                         }
                     }
                 }

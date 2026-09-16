@@ -36,6 +36,7 @@ import com.hervedev.fileprivacy.ui.HomeScreen
 import com.hervedev.fileprivacy.ui.PlaceholderScreen
 import com.hervedev.fileprivacy.ui.RecentsScreen
 import com.hervedev.fileprivacy.ui.RemoteConnectionsScreen
+import com.hervedev.fileprivacy.ui.StorageScreen
 import com.hervedev.fileprivacy.ui.TrashScreen
 
 object NavRoutes {
@@ -159,7 +160,7 @@ fun AppNavigation(
             }
 
             composable(route = NavRoutes.STORAGE) {
-                PlaceholderScreen(title = "Stockage")
+                StorageScreen(navController = navController)
             }
 
             composable(route = NavRoutes.RECENTS) {

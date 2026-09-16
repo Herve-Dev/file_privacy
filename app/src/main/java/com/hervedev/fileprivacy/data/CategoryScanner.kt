@@ -23,6 +23,15 @@ private val APK_EXTS = setOf("apk")
 
 object CategoryScanner {
 
+    suspend fun getCategorySizes(rootPath: String): Map<FileCategory, Long> = withContext(Dispatchers.IO) {
+        val map = mutableMapOf<FileCategory, Long>()
+        for (category in FileCategory.entries) {
+            val files = scanCategory(category, rootPath)
+            map[category] = files.sumOf { it.sizeBytes }
+        }
+        map
+    }
+
     suspend fun scanCategory(category: FileCategory, rootPath: String): List<FileItem> = withContext(Dispatchers.IO) {
         val root = File(rootPath)
         if (!root.exists() || !root.isDirectory) return@withContext emptyList()

@@ -8,7 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.hervedev.fileprivacy.data.CategoryScanner
 import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.LocalFileSource
+import com.hervedev.fileprivacy.data.PreferencesStorage
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.applySortPreference
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.getInitialIsGridMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +21,8 @@ class CategoryResultViewModel(
     application: Application,
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
+
+    private val preferencesStorage = PreferencesStorage(application)
 
     val categoryName: String = savedStateHandle.get<String>("categoryName") ?: "IMAGES"
     val category: FileCategory = try {
@@ -32,8 +37,15 @@ class CategoryResultViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isGridMode = MutableStateFlow(category == FileCategory.IMAGES)
+    private val _isGridMode = MutableStateFlow(
+        preferencesStorage.getInitialIsGridMode(category == FileCategory.IMAGES)
+    )
     val isGridMode: StateFlow<Boolean> = _isGridMode.asStateFlow()
+
+    private val _currentSortOrder = MutableStateFlow(preferencesStorage.defaultSortOrder)
+    val currentSortOrder: StateFlow<String> = _currentSortOrder.asStateFlow()
+
+    private var rawFileItems: List<FileItem> = emptyList()
 
     private val localFileSource = LocalFileSource(application)
 
@@ -45,12 +57,17 @@ class CategoryResultViewModel(
         _isGridMode.value = !_isGridMode.value
     }
 
+    fun setSessionSortOrder(order: String) {
+        _currentSortOrder.value = order
+        _fileItems.value = rawFileItems.applySortPreference(order)
+    }
+
     fun loadCategoryFiles() {
         viewModelScope.launch {
             _isLoading.value = true
             val rootPath = Environment.getExternalStorageDirectory().absolutePath
-            val results = CategoryScanner.scanCategory(category, rootPath)
-            _fileItems.value = results
+            rawFileItems = CategoryScanner.scanCategory(category, rootPath)
+            _fileItems.value = rawFileItems.applySortPreference(_currentSortOrder.value)
             _isLoading.value = false
         }
     }

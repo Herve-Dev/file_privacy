@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -67,6 +68,7 @@ fun CategoryResultScreen(
     val fileItems by viewModel.fileItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isGridMode by viewModel.isGridMode.collectAsState()
+    val currentSortOrder by viewModel.currentSortOrder.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -98,6 +100,44 @@ fun CategoryResultScreen(
                     }
                 },
                 actions = {
+                    var showQuickSortMenu by remember { mutableStateOf(false) }
+
+                    Box {
+                        IconButton(onClick = { showQuickSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Tune,
+                                contentDescription = "Trier"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showQuickSortMenu,
+                            onDismissRequest = { showQuickSortMenu = false },
+                            shape = RoundedCornerShape(Radius.card)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Nom (A-Z)", fontWeight = if (currentSortOrder == "NAME_ASC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("NAME_ASC")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Plus récent", fontWeight = if (currentSortOrder == "DATE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("DATE_DESC")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Plus grand", fontWeight = if (currentSortOrder == "SIZE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("SIZE_DESC")
+                                }
+                            )
+                        }
+                    }
+
                     IconButton(onClick = { viewModel.toggleViewMode() }) {
                         Icon(
                             imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,

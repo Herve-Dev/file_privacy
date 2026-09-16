@@ -2,6 +2,7 @@ package com.hervedev.fileprivacy.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -9,18 +10,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -66,6 +71,8 @@ fun RecentsScreen(
     val recentFiles by viewModel.recentFiles.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isRecentsEnabled by viewModel.isRecentsEnabled.collectAsState()
+    val isGridMode by viewModel.isGridMode.collectAsState()
+    val currentSortOrder by viewModel.currentSortOrder.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -109,6 +116,52 @@ fun RecentsScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
+                },
+                actions = {
+                    var showQuickSortMenu by remember { mutableStateOf(false) }
+
+                    Box {
+                        IconButton(onClick = { showQuickSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Tune,
+                                contentDescription = "Trier"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showQuickSortMenu,
+                            onDismissRequest = { showQuickSortMenu = false },
+                            shape = RoundedCornerShape(Radius.card)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Nom (A-Z)", fontWeight = if (currentSortOrder == "NAME_ASC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("NAME_ASC")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Plus récent", fontWeight = if (currentSortOrder == "DATE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("DATE_DESC")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Plus grand", fontWeight = if (currentSortOrder == "SIZE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                onClick = {
+                                    showQuickSortMenu = false
+                                    viewModel.setSessionSortOrder("SIZE_DESC")
+                                }
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = { viewModel.toggleViewMode() }) {
+                        Icon(
+                            imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,
+                            contentDescription = if (isGridMode) "Afficher en liste" else "Afficher en grille"
+                        )
+                    }
                 }
             )
         }
@@ -138,6 +191,32 @@ fun RecentsScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.Center)
+                    )
+                } else if (isGridMode) {
+                    FileGridView(
+                        fileItems = recentFiles,
+                        selectedPaths = emptySet(),
+                        isSelectionMode = false,
+                        sourceType = "local",
+                        onItemClick = { item -> itemForDetails = item },
+                        onItemLongClick = { item -> menuExpandedItemPath = item.path },
+                        onInfoClick = { item -> itemForDetails = item },
+                        onRenameClick = { item -> itemToRename = item },
+                        onDeleteClick = { item ->
+                            viewModel.deleteFile(item) { _, message ->
+                                scope.launch { snackbarHostState.showSnackbar(message) }
+                            }
+                        },
+                        onPermanentlyDeleteClick = { item -> itemToPermanentlyDelete = item },
+                        onCopyClick = { item ->
+                            FileClipboard.set(listOf(item), ClipboardMode.COPY)
+                            scope.launch { snackbarHostState.showSnackbar("'${item.name}' copié") }
+                        },
+                        onCutClick = { item ->
+                            FileClipboard.set(listOf(item), ClipboardMode.CUT)
+                            scope.launch { snackbarHostState.showSnackbar("'${item.name}' coupé") }
+                        },
+                        onToggleSelection = {}
                     )
                 } else {
                     Surface(

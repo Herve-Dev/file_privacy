@@ -33,9 +33,9 @@ import com.hervedev.fileprivacy.ui.AddSmbConnectionScreen
 import com.hervedev.fileprivacy.ui.CategoryResultScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
 import com.hervedev.fileprivacy.ui.HomeScreen
-import com.hervedev.fileprivacy.ui.PlaceholderScreen
 import com.hervedev.fileprivacy.ui.RecentsScreen
 import com.hervedev.fileprivacy.ui.RemoteConnectionsScreen
+import com.hervedev.fileprivacy.ui.SettingsScreen
 import com.hervedev.fileprivacy.ui.StorageScreen
 import com.hervedev.fileprivacy.ui.TrashScreen
 
@@ -172,7 +172,7 @@ fun AppNavigation(
             }
 
             composable(route = NavRoutes.SETTINGS) {
-                PlaceholderScreen(title = "Réglages")
+                SettingsScreen()
             }
 
             composable(

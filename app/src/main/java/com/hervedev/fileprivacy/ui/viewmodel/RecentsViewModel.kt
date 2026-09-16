@@ -8,6 +8,8 @@ import com.hervedev.fileprivacy.data.LocalFileSource
 import com.hervedev.fileprivacy.data.PreferencesStorage
 import com.hervedev.fileprivacy.data.RecentFilesScanner
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.applySortPreference
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.getInitialIsGridMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,10 +30,27 @@ class RecentsViewModel(application: Application) : AndroidViewModel(application)
     private val _isRecentsEnabled = MutableStateFlow(preferencesStorage.recentsEnabled)
     val isRecentsEnabled: StateFlow<Boolean> = _isRecentsEnabled.asStateFlow()
 
+    private val _isGridMode = MutableStateFlow(preferencesStorage.getInitialIsGridMode())
+    val isGridMode: StateFlow<Boolean> = _isGridMode.asStateFlow()
+
+    private val _currentSortOrder = MutableStateFlow(preferencesStorage.defaultSortOrder)
+    val currentSortOrder: StateFlow<String> = _currentSortOrder.asStateFlow()
+
+    private var rawFileItems: List<FileItem> = emptyList()
+
     private var hasScannedOnce = false
 
     init {
         scanRecents()
+    }
+
+    fun toggleViewMode() {
+        _isGridMode.value = !_isGridMode.value
+    }
+
+    fun setSessionSortOrder(order: String) {
+        _currentSortOrder.value = order
+        _recentFiles.value = rawFileItems.applySortPreference(order)
     }
 
     fun invalidateCache() {
@@ -52,8 +71,8 @@ class RecentsViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             val rootPath = Environment.getExternalStorageDirectory().absolutePath
-            val results = RecentFilesScanner.scanRecentFiles(rootPath, limit = 50)
-            _recentFiles.value = results
+            rawFileItems = RecentFilesScanner.scanRecentFiles(rootPath, limit = 50)
+            _recentFiles.value = rawFileItems.applySortPreference(_currentSortOrder.value)
             hasScannedOnce = true
             _isLoading.value = false
         }

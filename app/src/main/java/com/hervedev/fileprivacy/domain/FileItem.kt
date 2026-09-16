@@ -11,11 +11,36 @@ data class FileItem(
 )
 
 private val IMAGE_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "dng", "raw")
+private val VIDEO_EXTENSIONS = setOf("mp4", "mkv", "avi", "mov", "webm", "3gp")
+private val AUDIO_EXTENSIONS = setOf("mp3", "wav", "flac", "aac", "ogg", "m4a")
+
+private fun getExtension(name: String): String {
+    val dotIndex = name.lastIndexOf('.')
+    if (dotIndex < 0 || dotIndex == name.length - 1) return ""
+    return name.substring(dotIndex + 1).lowercase(Locale.getDefault())
+}
 
 fun FileItem.isImage(): Boolean {
     if (isDirectory) return false
-    val dotIndex = name.lastIndexOf('.')
-    if (dotIndex < 0 || dotIndex == name.length - 1) return false
-    val extension = name.substring(dotIndex + 1).lowercase(Locale.getDefault())
-    return IMAGE_EXTENSIONS.contains(extension)
+    return IMAGE_EXTENSIONS.contains(getExtension(name))
+}
+
+fun FileItem.isVideo(): Boolean {
+    if (isDirectory) return false
+    return VIDEO_EXTENSIONS.contains(getExtension(name))
+}
+
+fun FileItem.isAudio(): Boolean {
+    if (isDirectory) return false
+    return AUDIO_EXTENSIONS.contains(getExtension(name))
+}
+
+fun FileItem.isPdf(): Boolean {
+    if (isDirectory) return false
+    return getExtension(name) == "pdf"
+}
+
+fun FileItem.isApk(): Boolean {
+    if (isDirectory) return false
+    return getExtension(name) == "apk"
 }

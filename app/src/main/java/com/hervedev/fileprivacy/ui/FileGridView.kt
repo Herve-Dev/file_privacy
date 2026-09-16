@@ -72,6 +72,7 @@ import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.DuotoneFolderIcon
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.theme.getTypeColor
 import java.io.File
 
 @Composable
@@ -380,7 +381,7 @@ private fun FileGridItem(
                         Icon(
                             imageVector = iconVector,
                             contentDescription = item.name,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = item.getTypeColor(),
                             modifier = Modifier.size(32.dp)
                         )
                     }

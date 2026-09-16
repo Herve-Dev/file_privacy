@@ -13,6 +13,7 @@ data class FileItem(
 private val IMAGE_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "dng", "raw")
 private val VIDEO_EXTENSIONS = setOf("mp4", "mkv", "avi", "mov", "webm", "3gp")
 private val AUDIO_EXTENSIONS = setOf("mp3", "wav", "flac", "aac", "ogg", "m4a")
+private val DOCUMENT_EXTENSIONS = setOf("pdf", "doc", "docx", "txt", "xls", "xlsx", "ppt", "pptx", "epub")
 
 private fun getExtension(name: String): String {
     val dotIndex = name.lastIndexOf('.')
@@ -38,6 +39,11 @@ fun FileItem.isAudio(): Boolean {
 fun FileItem.isPdf(): Boolean {
     if (isDirectory) return false
     return getExtension(name) == "pdf"
+}
+
+fun FileItem.isDocument(): Boolean {
+    if (isDirectory) return false
+    return DOCUMENT_EXTENSIONS.contains(getExtension(name))
 }
 
 fun FileItem.isApk(): Boolean {

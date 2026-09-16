@@ -75,6 +75,7 @@ import com.hervedev.fileprivacy.ui.dialogs.RenameDialog
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.theme.getTypeColor
 import com.hervedev.fileprivacy.ui.utils.humanReadableByteCountSI
 import com.hervedev.fileprivacy.ui.viewmodel.FileListViewModel
 import kotlinx.coroutines.launch
@@ -647,7 +648,7 @@ fun FileListItem(
                 Icon(
                     imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
                     contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
-                    tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = item.getTypeColor(),
                     modifier = Modifier
                         .size(30.dp)
                         .padding(end = 4.dp)

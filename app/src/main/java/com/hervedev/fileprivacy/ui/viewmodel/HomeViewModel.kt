@@ -6,9 +6,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hervedev.fileprivacy.data.CategoryScanner
 import com.hervedev.fileprivacy.data.CredentialStorage
+import com.hervedev.fileprivacy.data.DateFilter
 import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.PreferencesStorage
 import com.hervedev.fileprivacy.data.RecentFilesScanner
+import com.hervedev.fileprivacy.data.SearchScanner
 import com.hervedev.fileprivacy.data.StorageVolumeInfo
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.data.db.AppDatabase
@@ -16,10 +18,13 @@ import com.hervedev.fileprivacy.data.db.SmbConnectionEntity
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.SmbConnection
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -50,6 +55,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _isScanningCategories = MutableStateFlow(false)
     val isScanningCategories: StateFlow<Boolean> = _isScanningCategories.asStateFlow()
 
+    // Search state
+    val searchQuery = MutableStateFlow("")
+    val searchTypeFilter = MutableStateFlow<FileCategory?>(null)
+    val searchDateFilter = MutableStateFlow<DateFilter?>(null)
+
+    private val _searchResults = MutableStateFlow<List<FileItem>>(emptyList())
+    val searchResults: StateFlow<List<FileItem>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
     private var hasScannedOnce = false
 
     val smbConnections: StateFlow<List<SmbConnection>> = smbConnectionDao.getAll()
@@ -70,6 +86,36 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     init {
         refreshVolumes()
         scanCategories()
+        setupSearchDebounce()
+    }
+
+    @OptIn(FlowPreview::class)
+    private fun setupSearchDebounce() {
+        viewModelScope.launch {
+            combine(searchQuery, searchTypeFilter, searchDateFilter) { query, type, date ->
+                Triple(query, type, date)
+            }
+                .debounce(400)
+                .collect { (query, type, date) ->
+                    if (query.trim().length >= 2) {
+                        _isSearching.value = true
+                        val rootPath = Environment.getExternalStorageDirectory().absolutePath
+                        val results = SearchScanner.searchFiles(query, rootPath, type, date)
+                        _searchResults.value = results
+                        _isSearching.value = false
+                    } else {
+                        _searchResults.value = emptyList()
+                        _isSearching.value = false
+                    }
+                }
+        }
+    }
+
+    fun clearSearch() {
+        searchQuery.value = ""
+        searchTypeFilter.value = null
+        searchDateFilter.value = null
+        _searchResults.value = emptyList()
     }
 
     fun refreshVolumes() {

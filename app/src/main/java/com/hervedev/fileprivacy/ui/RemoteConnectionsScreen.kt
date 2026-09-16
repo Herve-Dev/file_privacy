@@ -1,5 +1,7 @@
 package com.hervedev.fileprivacy.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +19,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CloudQueue
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,7 +55,7 @@ import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
 import com.hervedev.fileprivacy.ui.viewmodel.HomeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RemoteConnectionsScreen(
     navController: NavController,
@@ -69,7 +74,7 @@ fun RemoteConnectionsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Connexions réseau",
+                        text = "Distant",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -82,8 +87,17 @@ fun RemoteConnectionsScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(horizontal = Spacing.medium, vertical = Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
+            // Section 1: SMB
+            item {
+                Text(
+                    text = "Partages SMB",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             if (smbConnections.isEmpty()) {
                 item {
                     AppCard(
@@ -97,7 +111,7 @@ fun RemoteConnectionsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Aucune connexion configurée",
+                                text = "Aucune connexion SMB configurée",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -114,7 +128,7 @@ fun RemoteConnectionsScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(Spacing.small))
-                                Text("Ajouter une connexion", fontWeight = FontWeight.SemiBold)
+                                Text("Ajouter une connexion SMB", fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -123,7 +137,17 @@ fun RemoteConnectionsScreen(
                 items(smbConnections, key = { it.id }) { connection ->
                     Box {
                         AppCard(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(Radius.card))
+                                .combinedClickable(
+                                    onClick = {
+                                        navController.navigate(NavRoutes.smbListRoute(connection.id, ""))
+                                    },
+                                    onLongClick = {
+                                        menuExpandedConnectionId = connection.id
+                                    }
+                                ),
                             shape = RoundedCornerShape(Radius.card)
                         ) {
                             Row(
@@ -135,7 +159,7 @@ fun RemoteConnectionsScreen(
                                 Icon(
                                     imageVector = Icons.Outlined.Dns,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier
                                         .size(32.dp)
                                         .padding(end = 4.dp)
@@ -185,7 +209,6 @@ fun RemoteConnectionsScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(Spacing.small))
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -202,7 +225,97 @@ fun RemoteConnectionsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(Spacing.small))
-                            Text("Ajouter une connexion", fontWeight = FontWeight.SemiBold)
+                            Text("Ajouter une connexion SMB", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
+            // Section 2: FTP / SFTP (préparation visuelle)
+            item {
+                Spacer(modifier = Modifier.height(Spacing.small))
+                Text(
+                    text = "FTP / SFTP",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                AppCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(Radius.card)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Storage,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+                        Column {
+                            Text(
+                                text = "FTP / SFTP",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Disponible prochainement",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Section 3: WebDAV (préparation visuelle)
+            item {
+                Spacer(modifier = Modifier.height(Spacing.small))
+                Text(
+                    text = "WebDAV",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                AppCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(Radius.card)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CloudQueue,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+                        Column {
+                            Text(
+                                text = "WebDAV",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Disponible prochainement",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }

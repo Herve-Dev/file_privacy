@@ -120,7 +120,12 @@ fun FileGridView(
                         isSelectionMode = isSelectionMode,
                         sourceType = sourceType,
                         onClick = { onItemClick(item) },
-                        onLongClick = { onItemLongClick(item) },
+                        onLongClick = {
+                            if (!isSelectionMode) {
+                                menuExpandedItemPath = item.path
+                            }
+                            onItemLongClick(item)
+                        },
                         onFetchFolderThumbnail = onFetchFolderThumbnail
                     )
 

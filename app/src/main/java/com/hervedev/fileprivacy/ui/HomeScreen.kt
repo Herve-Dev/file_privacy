@@ -62,6 +62,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
@@ -337,7 +338,13 @@ fun HomeScreen(
                             usedGb = usedGb,
                             totalGb = totalGb,
                             onSeeAllClick = {
-                                navController.navigate(NavRoutes.STORAGE)
+                                navController.navigate(NavRoutes.STORAGE) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             },
                             modifier = Modifier.clickable {
                                 navController.navigate(NavRoutes.fileListRoute("local", internalRootPath))
@@ -473,7 +480,13 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.clickable {
-                                    navController.navigate(NavRoutes.RECENTS)
+                                    navController.navigate(NavRoutes.RECENTS) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             )
                         }

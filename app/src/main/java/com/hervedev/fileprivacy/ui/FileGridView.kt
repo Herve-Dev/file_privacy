@@ -1,5 +1,6 @@
 package com.hervedev.fileprivacy.ui
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -20,6 +21,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Android
+import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
@@ -29,6 +32,8 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -55,11 +60,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.request.videoFrameMillis
+import com.hervedev.fileprivacy.data.ThumbnailExtractors
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.isApk
+import com.hervedev.fileprivacy.domain.isAudio
 import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.domain.isPdf
+import com.hervedev.fileprivacy.domain.isVideo
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.DuotoneFolderIcon
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.theme.getTypeColor
 import java.io.File
 
 @Composable
@@ -77,8 +90,8 @@ fun FileGridView(
     onCopyClick: (FileItem) -> Unit,
     onCutClick: (FileItem) -> Unit,
     onToggleSelection: (FileItem) -> Unit,
-    onFetchFolderThumbnail: (suspend (String) -> String?)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFetchFolderThumbnail: (suspend (String) -> String?)? = null
 ) {
     var menuExpandedItemPath by remember { mutableStateOf<String?>(null) }
 
@@ -91,11 +104,11 @@ fun FileGridView(
         shadowElevation = 0.dp
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 105.dp),
+            columns = GridCells.Adaptive(minSize = 100.dp),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(all = Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small),
             horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            modifier = Modifier.fillMaxSize()
+            verticalArrangement = Arrangement.spacedBy(Spacing.small)
         ) {
             items(fileItems, key = { it.path }) { item ->
                 val isSelected = selectedPaths.contains(item.path)
@@ -226,18 +239,35 @@ private fun FileGridItem(
     onFetchFolderThumbnail: (suspend (String) -> String?)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val isLocalOrExternal = (sourceType == "local" || sourceType == "external")
+
     val isImageFile = item.isImage() && isLocalOrExternal
+    val isVideoFile = item.isVideo() && isLocalOrExternal
+    val isAudioFile = item.isAudio() && isLocalOrExternal
+    val isPdfFile = item.isPdf() && isLocalOrExternal
+    val isApkFile = item.isApk() && isLocalOrExternal
 
     var folderThumbnailPath by remember(item.path) { mutableStateOf<String?>(null) }
+    var extractedBitmap by remember(item.path) { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(item.path) {
-        if (item.isDirectory && isLocalOrExternal && onFetchFolderThumbnail != null) {
-            folderThumbnailPath = onFetchFolderThumbnail(item.path)
+        if (isLocalOrExternal) {
+            if (item.isDirectory && onFetchFolderThumbnail != null) {
+                folderThumbnailPath = onFetchFolderThumbnail(item.path)
+            } else if (isAudioFile) {
+                extractedBitmap = ThumbnailExtractors.extractAudioThumbnail(item.path)
+            } else if (isPdfFile) {
+                extractedBitmap = ThumbnailExtractors.extractPdfThumbnail(item.path)
+            } else if (isApkFile) {
+                extractedBitmap = ThumbnailExtractors.extractApkIcon(context, item.path)
+            }
         }
     }
 
-    Surface(
+    val hasVisualThumbnail = isImageFile || isVideoFile || folderThumbnailPath != null || extractedBitmap != null
+
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
@@ -247,27 +277,52 @@ private fun FileGridItem(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(Radius.item),
-        color = if (isSelected) {
+        containerColor = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
-        shadowElevation = if (isSelected) 6.dp else 2.dp,
-        tonalElevation = if (isSelected) 2.dp else 1.dp
+            MaterialTheme.colorScheme.surface
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (isImageFile || folderThumbnailPath != null) {
-                val imagePath = if (isImageFile) item.path else folderThumbnailPath!!
+            if (hasVisualThumbnail) {
+                val imageModel: Any = when {
+                    extractedBitmap != null -> extractedBitmap!!
+                    isImageFile || isVideoFile -> File(item.path)
+                    else -> File(folderThumbnailPath!!)
+                }
+
+                val requestBuilder = ImageRequest.Builder(LocalContext.current)
+                    .data(imageModel)
+                    .crossfade(true)
+
+                if (isVideoFile) {
+                    requestBuilder.videoFrameMillis(1000)
+                }
 
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(File(imagePath))
-                        .crossfade(true)
-                        .build(),
+                    model = requestBuilder.build(),
                     contentDescription = item.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
+
+                if (isVideoFile) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PlayArrow,
+                            contentDescription = "Vidéo",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
                 if (item.isDirectory) {
                     Box(
@@ -322,10 +377,16 @@ private fun FileGridItem(
                     if (item.isDirectory) {
                         DuotoneFolderIcon(size = 42.dp)
                     } else {
+                        val iconVector = when {
+                            isAudioFile -> Icons.Outlined.AudioFile
+                            isPdfFile -> Icons.Outlined.PictureAsPdf
+                            isApkFile -> Icons.Outlined.Android
+                            else -> Icons.Outlined.Description
+                        }
                         Icon(
-                            imageVector = Icons.Outlined.Description,
-                            contentDescription = "Fichier",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            imageVector = iconVector,
+                            contentDescription = item.name,
+                            tint = item.getTypeColor(),
                             modifier = Modifier.size(32.dp)
                         )
                     }

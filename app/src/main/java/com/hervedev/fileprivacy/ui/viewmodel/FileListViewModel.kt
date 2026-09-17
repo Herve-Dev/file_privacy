@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.hervedev.fileprivacy.data.CredentialStorage
 import com.hervedev.fileprivacy.data.FtpFileSource
 import com.hervedev.fileprivacy.data.LocalFileSource
+import com.hervedev.fileprivacy.data.PreferencesStorage
 import com.hervedev.fileprivacy.data.SmbFileSource
 import com.hervedev.fileprivacy.data.WebDavFileSource
 import com.hervedev.fileprivacy.data.db.AppDatabase
@@ -16,6 +17,8 @@ import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.FileSystemProvider
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.applySortPreference
+import com.hervedev.fileprivacy.domain.FileSortingPreferences.getInitialIsGridMode
 import com.hervedev.fileprivacy.domain.isImage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,11 +55,18 @@ class FileListViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val preferencesStorage = PreferencesStorage(application)
+
     private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaths: StateFlow<Set<String>> = _selectedPaths.asStateFlow()
 
-    private val _isGridMode = MutableStateFlow(false)
+    private val _isGridMode = MutableStateFlow(preferencesStorage.getInitialIsGridMode())
     val isGridMode: StateFlow<Boolean> = _isGridMode.asStateFlow()
+
+    private val _currentSortOrder = MutableStateFlow(preferencesStorage.defaultSortOrder)
+    val currentSortOrder: StateFlow<String> = _currentSortOrder.asStateFlow()
+
+    private var rawFileItems: List<FileItem> = emptyList()
 
     val hasImages: StateFlow<Boolean> = _fileItems
         .map { items -> items.any { it.isImage() } }
@@ -76,6 +86,11 @@ class FileListViewModel(
 
     fun toggleViewMode() {
         _isGridMode.value = !_isGridMode.value
+    }
+
+    fun setSessionSortOrder(order: String) {
+        _currentSortOrder.value = order
+        _fileItems.value = rawFileItems.applySortPreference(order)
     }
 
     suspend fun getFolderThumbnail(folderPath: String): String? {
@@ -145,7 +160,8 @@ class FileListViewModel(
         }
 
         _isStorageAccessible.value = true
-        _fileItems.value = provider.listFiles(currentPath)
+        rawFileItems = provider.listFiles(currentPath)
+        _fileItems.value = rawFileItems.applySortPreference(_currentSortOrder.value)
         _isLoading.value = false
     }
 

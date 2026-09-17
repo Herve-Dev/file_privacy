@@ -42,8 +42,15 @@ class LocalFileSource(private val context: Context? = null) : FileSystemProvider
         if (!dir.exists() || !dir.isDirectory) {
             return@withContext emptyList()
         }
+        val showHidden = context?.let { PreferencesStorage(it).showHiddenFiles } ?: false
         val files = dir.listFiles() ?: return@withContext emptyList()
-        files.map { f ->
+
+        files.filter { f ->
+            val name = f.name
+            if (name.equals(".trash-storage", ignoreCase = true)) return@filter false
+            if (!showHidden && name.startsWith(".")) return@filter false
+            true
+        }.map { f ->
             FileItem(
                 name = f.name,
                 path = f.absolutePath,

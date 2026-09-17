@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.data.db.TrashEntryEntity
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
@@ -221,7 +222,7 @@ private fun TrashItemCard(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.item))
@@ -229,10 +230,7 @@ private fun TrashItemCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        shape = RoundedCornerShape(Radius.item),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shadowElevation = 3.dp,
-        tonalElevation = 1.dp
+        shape = RoundedCornerShape(Radius.item)
     ) {
         Row(
             modifier = Modifier

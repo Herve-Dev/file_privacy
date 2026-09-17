@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -66,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.CreateFolderDialog
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.dialogs.FileDetailsDialog
@@ -73,6 +75,7 @@ import com.hervedev.fileprivacy.ui.dialogs.RenameDialog
 import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.theme.Radius
 import com.hervedev.fileprivacy.ui.theme.Spacing
+import com.hervedev.fileprivacy.ui.theme.getTypeColor
 import com.hervedev.fileprivacy.ui.utils.humanReadableByteCountSI
 import com.hervedev.fileprivacy.ui.viewmodel.FileListViewModel
 import kotlinx.coroutines.launch
@@ -93,6 +96,7 @@ fun FileListScreen(
     val selectedPaths by viewModel.selectedPaths.collectAsState()
     val clipboardState by viewModel.clipboardState.collectAsState()
     val isGridMode by viewModel.isGridMode.collectAsState()
+    val currentSortOrder by viewModel.currentSortOrder.collectAsState()
 
     val isSelectionMode = selectedPaths.isNotEmpty()
     val canNavigateBack = navController.previousBackStackEntry != null
@@ -203,6 +207,44 @@ fun FileListScreen(
                         }
                     },
                     actions = {
+                        var showQuickSortMenu by remember { mutableStateOf(false) }
+
+                        Box {
+                            IconButton(onClick = { showQuickSortMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Tune,
+                                    contentDescription = "Trier"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showQuickSortMenu,
+                                onDismissRequest = { showQuickSortMenu = false },
+                                shape = RoundedCornerShape(Radius.card)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Nom (A-Z)", fontWeight = if (currentSortOrder == "NAME_ASC") FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = {
+                                        showQuickSortMenu = false
+                                        viewModel.setSessionSortOrder("NAME_ASC")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Plus récent", fontWeight = if (currentSortOrder == "DATE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = {
+                                        showQuickSortMenu = false
+                                        viewModel.setSessionSortOrder("DATE_DESC")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Plus grand", fontWeight = if (currentSortOrder == "SIZE_DESC") FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = {
+                                        showQuickSortMenu = false
+                                        viewModel.setSessionSortOrder("SIZE_DESC")
+                                    }
+                                )
+                            }
+                        }
+
                         if (sourceType != "smb") {
                             IconButton(onClick = { viewModel.toggleViewMode() }) {
                                 Icon(
@@ -575,7 +617,7 @@ fun FileListItem(
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.item))
@@ -584,13 +626,11 @@ fun FileListItem(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(Radius.item),
-        color = if (isSelected) {
+        containerColor = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
-        shadowElevation = if (isSelected) 6.dp else 3.dp,
-        tonalElevation = if (isSelected) 2.dp else 1.dp
+            MaterialTheme.colorScheme.surface
+        }
     ) {
         Row(
             modifier = Modifier
@@ -608,7 +648,7 @@ fun FileListItem(
                 Icon(
                     imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
                     contentDescription = if (item.isDirectory) "Dossier" else "Fichier",
-                    tint = if (item.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = item.getTypeColor(),
                     modifier = Modifier
                         .size(30.dp)
                         .padding(end = 4.dp)

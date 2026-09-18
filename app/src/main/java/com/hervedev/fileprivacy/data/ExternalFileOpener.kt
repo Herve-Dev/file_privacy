@@ -1,5 +1,6 @@
 package com.hervedev.fileprivacy.data
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.webkit.MimeTypeMap
@@ -42,13 +43,10 @@ object ExternalFileOpener {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
 
-            val pm = context.packageManager
-            if (intent.resolveActivity(pm) != null || pm.queryIntentActivities(intent, 0).isNotEmpty()) {
-                context.startActivity(chooser)
-                true
-            } else {
-                false
-            }
+            context.startActivity(chooser)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
         } catch (_: Exception) {
             false
         }

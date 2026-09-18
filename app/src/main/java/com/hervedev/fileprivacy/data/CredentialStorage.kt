@@ -23,21 +23,21 @@ class CredentialStorage(context: Context) {
         )
     }
 
-    fun savePassword(connectionId: Long, password: String) {
+    fun savePassword(connectionId: Long, password: String, type: String = "smb") {
         sharedPreferences.edit {
-            putString(key(connectionId), password)
+            putString(key(connectionId, type), password)
         }
     }
 
-    fun getPassword(connectionId: Long): String? {
-        return sharedPreferences.getString(key(connectionId), null)
+    fun getPassword(connectionId: Long, type: String = "smb"): String? {
+        return sharedPreferences.getString(key(connectionId, type), null)
     }
 
-    fun deletePassword(connectionId: Long) {
+    fun deletePassword(connectionId: Long, type: String = "smb") {
         sharedPreferences.edit {
-            remove(key(connectionId))
+            remove(key(connectionId, type))
         }
     }
 
-    private fun key(connectionId: Long): String = "smb_password_$connectionId"
+    private fun key(connectionId: Long, type: String = "smb"): String = "${type}_password_$connectionId"
 }

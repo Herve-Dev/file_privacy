@@ -33,6 +33,7 @@ import com.hervedev.fileprivacy.ui.AddSmbConnectionScreen
 import com.hervedev.fileprivacy.ui.CategoryResultScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
 import com.hervedev.fileprivacy.ui.HomeScreen
+import com.hervedev.fileprivacy.ui.ImageViewerScreen
 import com.hervedev.fileprivacy.ui.RecentsScreen
 import com.hervedev.fileprivacy.ui.RemoteConnectionsScreen
 import com.hervedev.fileprivacy.ui.SettingsScreen
@@ -47,6 +48,7 @@ object NavRoutes {
     const val SETTINGS = "settings"
 
     const val CATEGORY_RESULT = "categoryResult/{categoryName}"
+    const val IMAGE_VIEWER = "imageViewer"
     const val ADD_SMB_CONNECTION = "addSmbConnection"
     const val TRASH = "trash"
     const val FILE_LIST = "fileList/{sourceType}/{encodedPath}"
@@ -182,6 +184,10 @@ fun AppNavigation(
                 )
             ) {
                 CategoryResultScreen(navController = navController)
+            }
+
+            composable(route = NavRoutes.IMAGE_VIEWER) {
+                ImageViewerScreen(navController = navController)
             }
 
             composable(route = NavRoutes.ADD_SMB_CONNECTION) {

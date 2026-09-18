@@ -54,6 +54,9 @@ import androidx.navigation.NavController
 import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.ImageViewerSession
+import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.ui.navigation.NavRoutes
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.dialogs.FileDetailsDialog
 import com.hervedev.fileprivacy.ui.dialogs.RenameDialog
@@ -238,7 +241,18 @@ fun RecentsScreen(
                                         item = item,
                                         isSelected = false,
                                         isSelectionMode = false,
-                                        onClick = { itemForDetails = item },
+                                        onClick = {
+                                            if (item.isImage()) {
+                                                val images = recentFiles.filter { it.isImage() }
+                                                val idx = images.indexOfFirst { it.path == item.path }
+                                                if (idx >= 0) {
+                                                    ImageViewerSession.start(images, idx, "local")
+                                                    navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                                }
+                                            } else {
+                                                itemForDetails = item
+                                            }
+                                        },
                                         onLongClick = { menuExpandedItemPath = item.path },
                                         onInfoClick = { itemForDetails = item }
                                     )

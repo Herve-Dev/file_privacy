@@ -69,6 +69,8 @@ import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.ImageViewerSession
+import com.hervedev.fileprivacy.domain.isImage
 import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.components.CategoryItemCard
 import com.hervedev.fileprivacy.ui.components.FileSearchBar
@@ -278,7 +280,18 @@ fun HomeScreen(
                                                 item = fileItem,
                                                 isSelected = false,
                                                 isSelectionMode = false,
-                                                onClick = { itemForDetails = fileItem },
+                                                onClick = {
+                                                    if (fileItem.isImage()) {
+                                                        val images = searchResults.filter { it.isImage() }
+                                                        val idx = images.indexOfFirst { it.path == fileItem.path }
+                                                        if (idx >= 0) {
+                                                            ImageViewerSession.start(images, idx, "local")
+                                                            navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                                        }
+                                                    } else {
+                                                        itemForDetails = fileItem
+                                                    }
+                                                },
                                                 onLongClick = { menuExpandedItemPath = fileItem.path },
                                                 onInfoClick = { itemForDetails = fileItem }
                                             )
@@ -528,7 +541,18 @@ fun HomeScreen(
                                             item = fileItem,
                                             isSelected = false,
                                             isSelectionMode = false,
-                                            onClick = {},
+                                            onClick = {
+                                                if (fileItem.isImage()) {
+                                                    val images = recentFiles.filter { it.isImage() }
+                                                    val idx = images.indexOfFirst { it.path == fileItem.path }
+                                                    if (idx >= 0) {
+                                                        ImageViewerSession.start(images, idx, "local")
+                                                        navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                                    }
+                                                } else {
+                                                    itemForDetails = fileItem
+                                                }
+                                            },
                                             onLongClick = {},
                                             onInfoClick = {}
                                         )

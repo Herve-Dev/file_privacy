@@ -67,6 +67,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.ImageViewerSession
+import com.hervedev.fileprivacy.domain.isImage
 import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.CreateFolderDialog
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
@@ -324,8 +326,13 @@ fun FileListScreen(
                             } else {
                                 navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
                             }
-                        } else {
-                            // TODO: Aperçu du fichier (Phase 6)
+                        } else if (item.isImage()) {
+                            val images = fileItems.filter { it.isImage() }
+                            val idx = images.indexOfFirst { it.path == item.path }
+                            if (idx >= 0) {
+                                ImageViewerSession.start(images, idx, sourceType)
+                                navController.navigate(NavRoutes.IMAGE_VIEWER)
+                            }
                         }
                     },
                     onItemLongClick = { item ->
@@ -388,8 +395,13 @@ fun FileListScreen(
                                             } else {
                                                 navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
                                             }
-                                        } else {
-                                            // TODO: Aperçu du fichier (Phase 6)
+                                        } else if (item.isImage()) {
+                                            val images = fileItems.filter { it.isImage() }
+                                            val idx = images.indexOfFirst { it.path == item.path }
+                                            if (idx >= 0) {
+                                                ImageViewerSession.start(images, idx, sourceType)
+                                                navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                            }
                                         }
                                     },
                                     onLongClick = {

@@ -67,8 +67,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hervedev.fileprivacy.data.ApkInstaller
 import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.isApk
 import com.hervedev.fileprivacy.domain.ImageViewerSession
 import com.hervedev.fileprivacy.domain.isImage
 import com.hervedev.fileprivacy.ui.components.AppCard
@@ -336,6 +338,16 @@ fun FileListScreen(
                                 ImageViewerSession.start(images, idx, sourceType)
                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
                             }
+                        } else if (item.isApk()) {
+                            if (!ApkInstaller.canRequestPackageInstalls(context)) {
+                                ApkInstaller.requestInstallPermission(context)
+                                scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
+                            } else {
+                                val installed = ApkInstaller.installApk(context, item.path)
+                                if (!installed) {
+                                    scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
+                                }
+                            }
                         } else if (sourceType == "local" || sourceType == "external") {
                             val opened = ExternalFileOpener.openFileExternally(context, item.path)
                             if (!opened) {
@@ -411,6 +423,16 @@ fun FileListScreen(
                                             if (idx >= 0) {
                                                 ImageViewerSession.start(images, idx, sourceType)
                                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                            }
+                                        } else if (item.isApk()) {
+                                            if (!ApkInstaller.canRequestPackageInstalls(context)) {
+                                                ApkInstaller.requestInstallPermission(context)
+                                                scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
+                                            } else {
+                                                val installed = ApkInstaller.installApk(context, item.path)
+                                                if (!installed) {
+                                                    scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
+                                                }
                                             }
                                         } else if (sourceType == "local" || sourceType == "external") {
                                             val opened = ExternalFileOpener.openFileExternally(context, item.path)

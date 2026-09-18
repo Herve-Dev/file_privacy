@@ -52,8 +52,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import com.hervedev.fileprivacy.data.ApkInstaller
 import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.ClipboardMode
+import com.hervedev.fileprivacy.domain.isApk
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.ImageViewerSession
@@ -212,6 +214,16 @@ fun RecentsScreen(
                                     ImageViewerSession.start(images, idx, "local")
                                     navController.navigate(NavRoutes.IMAGE_VIEWER)
                                 }
+                            } else if (item.isApk()) {
+                                if (!ApkInstaller.canRequestPackageInstalls(context)) {
+                                    ApkInstaller.requestInstallPermission(context)
+                                    scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
+                                } else {
+                                    val installed = ApkInstaller.installApk(context, item.path)
+                                    if (!installed) {
+                                        scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
+                                    }
+                                }
                             } else {
                                 val opened = ExternalFileOpener.openFileExternally(context, item.path)
                                 if (!opened) {
@@ -265,6 +277,16 @@ fun RecentsScreen(
                                                 if (idx >= 0) {
                                                     ImageViewerSession.start(images, idx, "local")
                                                     navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                                }
+                                            } else if (item.isApk()) {
+                                                if (!ApkInstaller.canRequestPackageInstalls(context)) {
+                                                    ApkInstaller.requestInstallPermission(context)
+                                                    scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
+                                                } else {
+                                                    val installed = ApkInstaller.installApk(context, item.path)
+                                                    if (!installed) {
+                                                        scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
+                                                    }
                                                 }
                                             } else {
                                                 val opened = ExternalFileOpener.openFileExternally(context, item.path)

@@ -64,6 +64,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.data.FileCategory
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.domain.ClipboardMode
@@ -105,6 +107,7 @@ fun HomeScreen(
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
 
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -289,7 +292,10 @@ fun HomeScreen(
                                                             navController.navigate(NavRoutes.IMAGE_VIEWER)
                                                         }
                                                     } else {
-                                                        itemForDetails = fileItem
+                                                        val opened = ExternalFileOpener.openFileExternally(context, fileItem.path)
+                                                        if (!opened) {
+                                                            scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                                        }
                                                     }
                                                 },
                                                 onLongClick = { menuExpandedItemPath = fileItem.path },
@@ -550,7 +556,10 @@ fun HomeScreen(
                                                         navController.navigate(NavRoutes.IMAGE_VIEWER)
                                                     }
                                                 } else {
-                                                    itemForDetails = fileItem
+                                                    val opened = ExternalFileOpener.openFileExternally(context, fileItem.path)
+                                                    if (!opened) {
+                                                        scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                                    }
                                                 }
                                             },
                                             onLongClick = {},

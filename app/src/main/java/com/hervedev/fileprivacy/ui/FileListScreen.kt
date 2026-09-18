@@ -62,10 +62,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.ImageViewerSession
 import com.hervedev.fileprivacy.domain.isImage
@@ -103,6 +105,7 @@ fun FileListScreen(
     val isSelectionMode = selectedPaths.isNotEmpty()
     val canNavigateBack = navController.previousBackStackEntry != null
 
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -333,6 +336,13 @@ fun FileListScreen(
                                 ImageViewerSession.start(images, idx, sourceType)
                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
                             }
+                        } else if (sourceType == "local" || sourceType == "external") {
+                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                            if (!opened) {
+                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                            }
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar("Ouverture distante non supportée") }
                         }
                     },
                     onItemLongClick = { item ->
@@ -402,6 +412,13 @@ fun FileListScreen(
                                                 ImageViewerSession.start(images, idx, sourceType)
                                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
                                             }
+                                        } else if (sourceType == "local" || sourceType == "external") {
+                                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                                            if (!opened) {
+                                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                            }
+                                        } else {
+                                            scope.launch { snackbarHostState.showSnackbar("Ouverture distante non supportée") }
                                         }
                                     },
                                     onLongClick = {

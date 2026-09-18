@@ -47,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.ImageViewerSession
 import com.hervedev.fileprivacy.domain.isImage
@@ -73,6 +75,7 @@ fun CategoryResultScreen(
     val isGridMode by viewModel.isGridMode.collectAsState()
     val currentSortOrder by viewModel.currentSortOrder.collectAsState()
 
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -182,7 +185,10 @@ fun CategoryResultScreen(
                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
                             }
                         } else {
-                            itemForDetails = item
+                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                            if (!opened) {
+                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                            }
                         }
                     },
                     onItemLongClick = { item -> menuExpandedItemPath = item.path },
@@ -233,7 +239,10 @@ fun CategoryResultScreen(
                                                 navController.navigate(NavRoutes.IMAGE_VIEWER)
                                             }
                                         } else {
-                                            itemForDetails = item
+                                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                                            if (!opened) {
+                                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                            }
                                         }
                                     },
                                     onLongClick = { menuExpandedItemPath = item.path },

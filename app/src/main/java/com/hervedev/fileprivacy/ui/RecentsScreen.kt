@@ -51,6 +51,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.ClipboardMode
 import com.hervedev.fileprivacy.domain.FileClipboard
 import com.hervedev.fileprivacy.domain.FileItem
@@ -77,6 +79,7 @@ fun RecentsScreen(
     val isGridMode by viewModel.isGridMode.collectAsState()
     val currentSortOrder by viewModel.currentSortOrder.collectAsState()
 
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -201,7 +204,21 @@ fun RecentsScreen(
                         selectedPaths = emptySet(),
                         isSelectionMode = false,
                         sourceType = "local",
-                        onItemClick = { item -> itemForDetails = item },
+                        onItemClick = { item ->
+                            if (item.isImage()) {
+                                val images = recentFiles.filter { it.isImage() }
+                                val idx = images.indexOfFirst { it.path == item.path }
+                                if (idx >= 0) {
+                                    ImageViewerSession.start(images, idx, "local")
+                                    navController.navigate(NavRoutes.IMAGE_VIEWER)
+                                }
+                            } else {
+                                val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                                if (!opened) {
+                                    scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                }
+                            }
+                        },
                         onItemLongClick = { item -> menuExpandedItemPath = item.path },
                         onInfoClick = { item -> itemForDetails = item },
                         onRenameClick = { item -> itemToRename = item },
@@ -250,7 +267,10 @@ fun RecentsScreen(
                                                     navController.navigate(NavRoutes.IMAGE_VIEWER)
                                                 }
                                             } else {
-                                                itemForDetails = item
+                                                val opened = ExternalFileOpener.openFileExternally(context, item.path)
+                                                if (!opened) {
+                                                    scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                                                }
                                             }
                                         },
                                         onLongClick = { menuExpandedItemPath = item.path },

@@ -16,9 +16,11 @@ import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.data.db.AppDatabase
 import com.hervedev.fileprivacy.data.db.SmbConnectionEntity
 import com.hervedev.fileprivacy.data.db.FtpConnectionEntity
+import com.hervedev.fileprivacy.data.db.WebDavConnectionEntity
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.FtpConnection
 import com.hervedev.fileprivacy.domain.SmbConnection
+import com.hervedev.fileprivacy.domain.WebDavConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +73,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var hasScannedOnce = false
 
     private val ftpConnectionDao = db.ftpConnectionDao()
+    private val webDavConnectionDao = db.webDavConnectionDao()
 
     val smbConnections: StateFlow<List<SmbConnection>> = smbConnectionDao.getAll()
         .map { entities -> entities.map { it.toDomain() } }
@@ -81,6 +84,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     val ftpConnections: StateFlow<List<FtpConnection>> = ftpConnectionDao.getAll()
+        .map { entities -> entities.map { it.toDomain() } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val webDavConnections: StateFlow<List<WebDavConnection>> = webDavConnectionDao.getAll()
         .map { entities -> entities.map { it.toDomain() } }
         .stateIn(
             scope = viewModelScope,
@@ -193,6 +204,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             ftpConnectionDao.delete(FtpConnectionEntity.fromDomain(connection))
             credentialStorage.deletePassword(connection.id, type = "ftp")
+        }
+    }
+
+    fun deleteWebDavConnection(connection: WebDavConnection) {
+        viewModelScope.launch {
+            webDavConnectionDao.delete(WebDavConnectionEntity.fromDomain(connection))
+            credentialStorage.deletePassword(connection.id, type = "webdav")
         }
     }
 }

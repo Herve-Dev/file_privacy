@@ -10,6 +10,7 @@ import com.hervedev.fileprivacy.data.CredentialStorage
 import com.hervedev.fileprivacy.data.FtpFileSource
 import com.hervedev.fileprivacy.data.LocalFileSource
 import com.hervedev.fileprivacy.data.PreferencesStorage
+import com.hervedev.fileprivacy.data.RemoteFileCache
 import com.hervedev.fileprivacy.data.SmbFileSource
 import com.hervedev.fileprivacy.data.WebDavFileSource
 import com.hervedev.fileprivacy.data.db.AppDatabase
@@ -396,6 +397,26 @@ class FileListViewModel(
                 onResult(false, "$countSuccess/$total élément(s) collé(s)")
             } else {
                 onResult(false, "Échec du collage")
+            }
+        }
+    }
+
+    fun downloadRemoteFileToCache(item: FileItem, onResult: (File?) -> Unit) {
+        val provider = fileSystemProvider ?: run {
+            onResult(null)
+            return
+        }
+        viewModelScope.launch {
+            val cacheFile = RemoteFileCache.getCacheFileFor(
+                getApplication(),
+                connectionId ?: 0L,
+                item.name
+            )
+            val success = provider.downloadToCache(item.path, cacheFile)
+            if (success && cacheFile.exists() && cacheFile.length() > 0) {
+                onResult(cacheFile)
+            } else {
+                onResult(null)
             }
         }
     }

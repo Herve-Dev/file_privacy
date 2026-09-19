@@ -3,6 +3,8 @@ package com.hervedev.fileprivacy.data
 import android.util.Log
 import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.FileSystemProvider
+import java.io.File
+import java.util.Locale
 import jcifs.CIFSContext
 import jcifs.smb.SmbFile
 import kotlinx.coroutines.Dispatchers
@@ -150,5 +152,55 @@ class SmbFileSource(
             Log.e(tag, "Échec de la création de dossier SMB pour '$path'", e)
             false
         }
+    }
+
+    override suspend fun downloadToCache(path: String, destinationFile: File): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val url = getUrl(relativePath = path, isDirectory = false)
+            val smbFile = SmbFile(url, cifsContext)
+            if (!smbFile.exists()) return@withContext false
+
+            smbFile.inputStream.use { input ->
+                destinationFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(tag, "Échec du téléchargement SMB vers le cache pour '$path'", e)
+            false
+        }
+    }
+
+    override suspend fun moveToTrash(path: String): Boolean {
+        return deleteFile(path)
+    }
+
+    override suspend fun restoreFromTrash(path: String): Boolean {
+        return false
+    }
+
+    override suspend fun listTrash(): List<FileItem> {
+        return emptyList()
+    }
+
+    override suspend fun permanentlyDelete(path: String): Boolean {
+        return deleteFile(path)
+    }
+
+    override suspend fun findFirstImageThumbnail(folderPath: String, maxDepth: Int): String? {
+        return try {
+            val items = listFiles(folderPath)
+            items.firstOrNull { !it.isDirectory && isImageFileName(it.name) }?.path
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun isImageFileName(filename: String): Boolean {
+        val dotIndex = filename.lastIndexOf('.')
+        if (dotIndex <= 0 || dotIndex == filename.length - 1) return false
+        val ext = filename.substring(dotIndex + 1).lowercase(Locale.getDefault())
+        return setOf("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic").contains(ext)
     }
 }

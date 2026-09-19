@@ -242,4 +242,18 @@ class FtpFileSource(
             null
         }
     }
+
+    override suspend fun downloadToCache(path: String, destinationFile: File): Boolean {
+        return try {
+            withFtpConnection { client ->
+                val targetPath = path.trimStart('/')
+                destinationFile.outputStream().use { output ->
+                    client.retrieveFile(targetPath, output)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur downloadToCache FTP ($path): ${e.localizedMessage}", e)
+            false
+        }
+    }
 }

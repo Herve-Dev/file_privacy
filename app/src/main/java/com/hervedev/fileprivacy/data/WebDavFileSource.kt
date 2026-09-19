@@ -12,6 +12,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
+import java.io.File
 import java.io.StringReader
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
@@ -295,6 +296,30 @@ class WebDavFileSource(
             items.firstOrNull { !it.isDirectory && isImageFileName(it.name) }?.path
         } catch (_: Exception) {
             null
+        }
+    }
+
+    override suspend fun downloadToCache(path: String, destinationFile: File): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val url = buildUrl(path, isFolder = false)
+            val request = Request.Builder()
+                .url(url)
+                .get()
+                .build()
+
+            val response = okHttpClient.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext false
+
+            val body = response.body ?: return@withContext false
+            body.byteStream().use { input ->
+                destinationFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur downloadToCache WebDAV ($path): ${e.localizedMessage}", e)
+            false
         }
     }
 }

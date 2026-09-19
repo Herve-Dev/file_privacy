@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -73,6 +74,9 @@ import com.hervedev.fileprivacy.domain.FileItem
 import com.hervedev.fileprivacy.domain.isApk
 import com.hervedev.fileprivacy.domain.ImageViewerSession
 import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.domain.isVideo
+import com.hervedev.fileprivacy.domain.isAudio
+import com.hervedev.fileprivacy.domain.isDocument
 import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.CreateFolderDialog
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
@@ -121,6 +125,58 @@ fun FileListScreen(
     var showBatchPermanentDeleteDialog by remember { mutableStateOf(false) }
 
     var menuExpandedItemPath by remember { mutableStateOf<String?>(null) }
+    var isDownloadingRemoteFile by remember { mutableStateOf(false) }
+
+    val handleFileClick: (FileItem) -> Unit = { item ->
+        if (isSelectionMode) {
+            viewModel.toggleSelection(item.path)
+        } else if (item.isDirectory) {
+            if (connectionId != null) {
+                navController.navigate(NavRoutes.remoteListRoute(sourceType, connectionId, item.path))
+            } else {
+                navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
+            }
+        } else if (item.isImage()) {
+            val images = fileItems.filter { it.isImage() }
+            val idx = images.indexOfFirst { it.path == item.path }
+            if (idx >= 0) {
+                ImageViewerSession.start(images, idx, sourceType, connectionId)
+                navController.navigate(NavRoutes.IMAGE_VIEWER)
+            }
+        } else if (item.isApk()) {
+            if (sourceType in listOf("local", "external")) {
+                if (!ApkInstaller.canRequestPackageInstalls(context)) {
+                    ApkInstaller.requestInstallPermission(context)
+                    scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
+                } else {
+                    val installed = ApkInstaller.installApk(context, item.path)
+                    if (!installed) {
+                        scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
+                    }
+                }
+            } else {
+                scope.launch { snackbarHostState.showSnackbar("L'installation directe d'APK distant n'est pas supportée") }
+            }
+        } else if (sourceType in listOf("local", "external")) {
+            val opened = ExternalFileOpener.openFileExternally(context, item.path)
+            if (!opened) {
+                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+            }
+        } else {
+            isDownloadingRemoteFile = true
+            viewModel.downloadRemoteFileToCache(item) { cachedFile ->
+                isDownloadingRemoteFile = false
+                if (cachedFile != null) {
+                    val opened = ExternalFileOpener.openFileExternally(context, cachedFile.absolutePath)
+                    if (!opened) {
+                        scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
+                    }
+                } else {
+                    scope.launch { snackbarHostState.showSnackbar("Impossible de télécharger le fichier distant") }
+                }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -252,7 +308,7 @@ fun FileListScreen(
                             }
                         }
 
-                        if (sourceType != "smb") {
+                        if (sourceType in listOf("local", "external")) {
                             IconButton(onClick = { viewModel.toggleViewMode() }) {
                                 Icon(
                                     imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,
@@ -322,41 +378,7 @@ fun FileListScreen(
                     selectedPaths = selectedPaths,
                     isSelectionMode = isSelectionMode,
                     sourceType = sourceType,
-                    onItemClick = { item ->
-                        if (isSelectionMode) {
-                            viewModel.toggleSelection(item.path)
-                        } else if (item.isDirectory) {
-                            if (connectionId != null) {
-                                navController.navigate(NavRoutes.remoteListRoute(sourceType, connectionId, item.path))
-                            } else {
-                                navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
-                            }
-                        } else if (item.isImage()) {
-                            val images = fileItems.filter { it.isImage() }
-                            val idx = images.indexOfFirst { it.path == item.path }
-                            if (idx >= 0) {
-                                ImageViewerSession.start(images, idx, sourceType)
-                                navController.navigate(NavRoutes.IMAGE_VIEWER)
-                            }
-                        } else if (item.isApk()) {
-                            if (!ApkInstaller.canRequestPackageInstalls(context)) {
-                                ApkInstaller.requestInstallPermission(context)
-                                scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
-                            } else {
-                                val installed = ApkInstaller.installApk(context, item.path)
-                                if (!installed) {
-                                    scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
-                                }
-                            }
-                        } else if (sourceType == "local" || sourceType == "external") {
-                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
-                            if (!opened) {
-                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
-                            }
-                        } else {
-                            scope.launch { snackbarHostState.showSnackbar("Ouverture distante non supportée") }
-                        }
-                    },
+                    onItemClick = handleFileClick,
                     onItemLongClick = { item ->
                         if (!isSelectionMode) {
                             menuExpandedItemPath = item.path
@@ -408,41 +430,7 @@ fun FileListScreen(
                                     item = item,
                                     isSelected = isSelected,
                                     isSelectionMode = isSelectionMode,
-                                    onClick = {
-                                        if (isSelectionMode) {
-                                            viewModel.toggleSelection(item.path)
-                                        } else if (item.isDirectory) {
-                                            if (connectionId != null) {
-                                                navController.navigate(NavRoutes.smbListRoute(connectionId, item.path))
-                                            } else {
-                                                navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
-                                            }
-                                        } else if (item.isImage()) {
-                                            val images = fileItems.filter { it.isImage() }
-                                            val idx = images.indexOfFirst { it.path == item.path }
-                                            if (idx >= 0) {
-                                                ImageViewerSession.start(images, idx, sourceType)
-                                                navController.navigate(NavRoutes.IMAGE_VIEWER)
-                                            }
-                                        } else if (item.isApk()) {
-                                            if (!ApkInstaller.canRequestPackageInstalls(context)) {
-                                                ApkInstaller.requestInstallPermission(context)
-                                                scope.launch { snackbarHostState.showSnackbar("Veuillez autoriser l'installation d'applications inconnues") }
-                                            } else {
-                                                val installed = ApkInstaller.installApk(context, item.path)
-                                                if (!installed) {
-                                                    scope.launch { snackbarHostState.showSnackbar("Impossible de lancer l'installation de l'APK") }
-                                                }
-                                            }
-                                        } else if (sourceType == "local" || sourceType == "external") {
-                                            val opened = ExternalFileOpener.openFileExternally(context, item.path)
-                                            if (!opened) {
-                                                scope.launch { snackbarHostState.showSnackbar("Aucune application ne peut ouvrir ce fichier") }
-                                            }
-                                        } else {
-                                            scope.launch { snackbarHostState.showSnackbar("Ouverture distante non supportée") }
-                                        }
-                                    },
+                                    onClick = { handleFileClick(item) },
                                     onLongClick = {
                                         if (!isSelectionMode) {
                                             menuExpandedItemPath = item.path
@@ -653,6 +641,33 @@ fun FileListScreen(
                     scope.launch { snackbarHostState.showSnackbar(message) }
                 }
             }
+        )
+    }
+
+    if (isDownloadingRemoteFile) {
+        AlertDialog(
+            onDismissRequest = {},
+            confirmButton = {},
+            title = {
+                Text(
+                    text = "Téléchargement...",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text(
+                        text = "Téléchargement du fichier distant...",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            shape = RoundedCornerShape(Radius.card)
         )
     }
 }

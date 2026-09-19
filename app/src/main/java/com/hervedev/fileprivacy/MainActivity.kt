@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.hervedev.fileprivacy.data.RemoteFileCache
 import com.hervedev.fileprivacy.ui.navigation.AppNavigation
 import com.hervedev.fileprivacy.ui.theme.FilePrivacyTheme
 
@@ -39,6 +40,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RemoteFileCache.clearCache(this)
         enableEdgeToEdge()
         setContent {
             FilePrivacyTheme {

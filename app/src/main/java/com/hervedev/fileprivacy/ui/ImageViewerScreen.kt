@@ -9,10 +9,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,6 +68,7 @@ import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
 import com.hervedev.fileprivacy.ui.dialogs.FileDetailsDialog
 import com.hervedev.fileprivacy.ui.dialogs.RenameDialog
 import com.hervedev.fileprivacy.ui.theme.Radius
+import com.hervedev.fileprivacy.ui.theme.Spacing
 import com.hervedev.fileprivacy.ui.viewmodel.ImageViewerViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -78,6 +82,9 @@ fun ImageViewerScreen(
     val imagesList by viewModel.imagesList.collectAsState()
     val initialIndex = viewModel.initialIndex
     val sourceType = viewModel.sourceType
+    val cachedImageMap by viewModel.cachedImageMap.collectAsState()
+    val loadingPages by viewModel.loadingPages.collectAsState()
+    val isLocal = sourceType in listOf("local", "external")
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -241,6 +248,9 @@ fun ImageViewerScreen(
         ) { page ->
             val item = imagesList.getOrNull(page) ?: return@HorizontalPager
 
+            val imageFile: File? = if (isLocal) File(item.path) else cachedImageMap[item.path]
+            val isLoadingPage = !isLocal && (imageFile == null || loadingPages.contains(item.path))
+
             var scale by remember { mutableFloatStateOf(1f) }
             var offset by remember { mutableStateOf(Offset.Zero) }
 
@@ -249,6 +259,9 @@ fun ImageViewerScreen(
                 offset = Offset.Zero
                 if (page == pagerState.currentPage) {
                     isCurrentPageZoomed = false
+                }
+                if (!isLocal) {
+                    viewModel.ensureImageCached(item)
                 }
             }
 
@@ -299,22 +312,36 @@ fun ImageViewerScreen(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(File(item.path))
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = item.name,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offset.x,
-                            translationY = offset.y
+                if (isLoadingPage) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                    ) {
+                        CircularProgressIndicator(color = Color.White)
+                        Text(
+                            text = "Chargement...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
                         )
-                )
+                    }
+                } else if (imageFile != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageFile)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = item.name,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
+                    )
+                }
             }
         }
     }

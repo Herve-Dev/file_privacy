@@ -56,6 +56,7 @@ dependencies {
 
     implementation(libs.jcifs.ng)
     implementation("commons-net:commons-net:3.13.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

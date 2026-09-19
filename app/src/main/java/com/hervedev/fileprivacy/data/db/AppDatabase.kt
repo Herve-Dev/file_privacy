@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [SmbConnectionEntity::class, TrashEntryEntity::class, FtpConnectionEntity::class],
-    version = 3,
+    entities = [SmbConnectionEntity::class, TrashEntryEntity::class, FtpConnectionEntity::class, WebDavConnectionEntity::class],
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -15,6 +15,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun smbConnectionDao(): SmbConnectionDao
     abstract fun trashEntryDao(): TrashEntryDao
     abstract fun ftpConnectionDao(): FtpConnectionDao
+    abstract fun webDavConnectionDao(): WebDavConnectionDao
 
     companion object {
         @Volatile

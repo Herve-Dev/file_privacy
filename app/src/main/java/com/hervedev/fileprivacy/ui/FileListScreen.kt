@@ -2,6 +2,7 @@ package com.hervedev.fileprivacy.ui
 
 import android.os.Environment
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
@@ -54,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,11 +66,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.hervedev.fileprivacy.data.ApkInstaller
 import com.hervedev.fileprivacy.data.ExternalFileOpener
 import com.hervedev.fileprivacy.domain.FileItem
@@ -89,6 +96,7 @@ import com.hervedev.fileprivacy.ui.theme.getTypeColor
 import com.hervedev.fileprivacy.ui.utils.humanReadableByteCountSI
 import com.hervedev.fileprivacy.ui.viewmodel.FileListViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +115,7 @@ fun FileListScreen(
     val clipboardState by viewModel.clipboardState.collectAsState()
     val isGridMode by viewModel.isGridMode.collectAsState()
     val currentSortOrder by viewModel.currentSortOrder.collectAsState()
+    val remoteThumbnailsMap by viewModel.remoteThumbnailsMap.collectAsState()
 
     val isSelectionMode = selectedPaths.isNotEmpty()
     val canNavigateBack = navController.previousBackStackEntry != null
@@ -403,7 +412,9 @@ fun FileListScreen(
                         scope.launch { snackbarHostState.showSnackbar("'${item.name}' coupé dans le presse-papier") }
                     },
                     onToggleSelection = { item -> viewModel.toggleSelection(item.path) },
-                    onFetchFolderThumbnail = { folderPath -> viewModel.getFolderThumbnail(folderPath) }
+                    onFetchFolderThumbnail = { folderPath -> viewModel.getFolderThumbnail(folderPath) },
+                    remoteThumbnailsMap = remoteThumbnailsMap,
+                    onFetchRemoteThumbnail = { item -> viewModel.fetchRemoteThumbnail(item) }
                 )
             } else {
                 Surface(
@@ -428,6 +439,7 @@ fun FileListScreen(
                                     item = item,
                                     isSelected = isSelected,
                                     isSelectionMode = isSelectionMode,
+                                    sourceType = sourceType,
                                     onClick = { handleFileClick(item) },
                                     onLongClick = {
                                         if (!isSelectionMode) {
@@ -436,7 +448,9 @@ fun FileListScreen(
                                     },
                                     onInfoClick = {
                                         itemForDetails = item
-                                    }
+                                    },
+                                    remoteThumbFile = remoteThumbnailsMap[item.path],
+                                    onFetchRemoteThumbnail = { viewModel.fetchRemoteThumbnail(it) }
                                 )
 
                                 DropdownMenu(
@@ -676,11 +690,23 @@ fun FileListItem(
     item: FileItem,
     isSelected: Boolean,
     isSelectionMode: Boolean,
+    sourceType: String = "local",
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onInfoClick: () -> Unit,
+    remoteThumbFile: File? = null,
+    onFetchRemoteThumbnail: ((FileItem) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val isRemote = sourceType in listOf("smb", "ftp", "webdav")
+    val isRemoteImageOrVideo = isRemote && (item.isImage() || item.isVideo())
+
+    LaunchedEffect(item.path) {
+        if (isRemoteImageOrVideo && remoteThumbFile == null && onFetchRemoteThumbnail != null) {
+            onFetchRemoteThumbnail(item)
+        }
+    }
+
     AppCard(
         modifier = modifier
             .fillMaxWidth()
@@ -708,6 +734,38 @@ fun FileListItem(
                     onCheckedChange = { onClick() },
                     modifier = Modifier.padding(end = Spacing.small)
                 )
+            } else if (remoteThumbFile != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = Spacing.medium)
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(remoteThumbFile)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = item.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    if (item.isVideo()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.35f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.PlayArrow,
+                                contentDescription = "Vidéo",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
             } else {
                 Icon(
                     imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,

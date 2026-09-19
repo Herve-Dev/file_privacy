@@ -11,6 +11,7 @@ import com.hervedev.fileprivacy.data.FtpFileSource
 import com.hervedev.fileprivacy.data.LocalFileSource
 import com.hervedev.fileprivacy.data.PreferencesStorage
 import com.hervedev.fileprivacy.data.RemoteFileCache
+import com.hervedev.fileprivacy.data.ThumbnailCache
 import com.hervedev.fileprivacy.data.SmbFileSource
 import com.hervedev.fileprivacy.data.WebDavFileSource
 import com.hervedev.fileprivacy.data.db.AppDatabase
@@ -21,6 +22,7 @@ import com.hervedev.fileprivacy.domain.FileSystemProvider
 import com.hervedev.fileprivacy.domain.FileSortingPreferences.applySortPreference
 import com.hervedev.fileprivacy.domain.FileSortingPreferences.getInitialIsGridMode
 import com.hervedev.fileprivacy.domain.isImage
+import com.hervedev.fileprivacy.domain.isVideo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -78,6 +80,9 @@ class FileListViewModel(
         )
 
     val clipboardState = FileClipboard.state
+
+    private val _remoteThumbnailsMap = MutableStateFlow<Map<String, File>>(emptyMap())
+    val remoteThumbnailsMap: StateFlow<Map<String, File>> = _remoteThumbnailsMap.asStateFlow()
 
     private var fileSystemProvider: FileSystemProvider? = null
 
@@ -417,6 +422,26 @@ class FileListViewModel(
                 onResult(cacheFile)
             } else {
                 onResult(null)
+            }
+        }
+    }
+
+    fun fetchRemoteThumbnail(item: FileItem) {
+        if (sourceType in listOf("local", "external")) return
+        if (!item.isImage() && !item.isVideo()) return
+        if (_remoteThumbnailsMap.value.containsKey(item.path)) return
+
+        val provider = fileSystemProvider ?: return
+        viewModelScope.launch {
+            val thumbFile = ThumbnailCache.getOrCreateThumbnail(
+                context = getApplication(),
+                connectionId = connectionId ?: 0L,
+                connectionType = sourceType,
+                fileSystemProvider = provider,
+                item = item
+            )
+            if (thumbFile != null && thumbFile.exists() && thumbFile.length() > 0) {
+                _remoteThumbnailsMap.value = _remoteThumbnailsMap.value + (item.path to thumbFile)
             }
         }
     }

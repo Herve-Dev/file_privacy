@@ -91,7 +91,9 @@ fun FileGridView(
     onCutClick: (FileItem) -> Unit,
     onToggleSelection: (FileItem) -> Unit,
     modifier: Modifier = Modifier,
-    onFetchFolderThumbnail: (suspend (String) -> String?)? = null
+    onFetchFolderThumbnail: (suspend (String) -> String?)? = null,
+    remoteThumbnailsMap: Map<String, File> = emptyMap(),
+    onFetchRemoteThumbnail: ((FileItem) -> Unit)? = null
 ) {
     var menuExpandedItemPath by remember { mutableStateOf<String?>(null) }
 
@@ -126,7 +128,9 @@ fun FileGridView(
                             }
                             onItemLongClick(item)
                         },
-                        onFetchFolderThumbnail = onFetchFolderThumbnail
+                        onFetchFolderThumbnail = onFetchFolderThumbnail,
+                        remoteThumbnailsMap = remoteThumbnailsMap,
+                        onFetchRemoteThumbnail = onFetchRemoteThumbnail
                     )
 
                     DropdownMenu(
@@ -237,10 +241,15 @@ private fun FileGridItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onFetchFolderThumbnail: (suspend (String) -> String?)? = null,
+    remoteThumbnailsMap: Map<String, File> = emptyMap(),
+    onFetchRemoteThumbnail: ((FileItem) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val isLocalOrExternal = (sourceType == "local" || sourceType == "external")
+    val isRemote = !isLocalOrExternal
+    val isRemoteImageOrVideo = isRemote && (item.isImage() || item.isVideo())
+    val remoteThumbFile = if (isRemote) remoteThumbnailsMap[item.path] else null
 
     val isImageFile = item.isImage() && isLocalOrExternal
     val isVideoFile = item.isVideo() && isLocalOrExternal
@@ -262,10 +271,12 @@ private fun FileGridItem(
             } else if (isApkFile) {
                 extractedBitmap = ThumbnailExtractors.extractApkIcon(context, item.path)
             }
+        } else if (isRemoteImageOrVideo && remoteThumbFile == null && onFetchRemoteThumbnail != null) {
+            onFetchRemoteThumbnail(item)
         }
     }
 
-    val hasVisualThumbnail = isImageFile || isVideoFile || folderThumbnailPath != null || extractedBitmap != null
+    val hasVisualThumbnail = isImageFile || isVideoFile || folderThumbnailPath != null || extractedBitmap != null || remoteThumbFile != null
 
     AppCard(
         modifier = modifier
@@ -286,6 +297,7 @@ private fun FileGridItem(
         Box(modifier = Modifier.fillMaxSize()) {
             if (hasVisualThumbnail) {
                 val imageModel: Any = when {
+                    remoteThumbFile != null -> remoteThumbFile
                     extractedBitmap != null -> extractedBitmap!!
                     isImageFile || isVideoFile -> File(item.path)
                     else -> File(folderThumbnailPath!!)
@@ -306,7 +318,7 @@ private fun FileGridItem(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (isVideoFile) {
+                if (isVideoFile || (isRemote && item.isVideo())) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)

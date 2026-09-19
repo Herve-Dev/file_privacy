@@ -144,10 +144,30 @@ class FileListViewModel(
                         password = pwd,
                         useFtps = entity.useFtps
                     )
+                } else if (sourceType == "webdav" && connectionId != null) {
+                    val db = AppDatabase.getInstance(getApplication())
+                    val dao = db.webDavConnectionDao()
+                    val entity = dao.getById(connectionId)
+                    val credStorage = CredentialStorage(getApplication())
+                    val pwd = credStorage.getPassword(connectionId, type = "webdav") ?: ""
+
+                    if (entity == null) {
+                        _isStorageAccessible.value = false
+                        _errorMessage.value = "La connexion WebDAV n'existe plus."
+                        _isLoading.value = false
+                        return@launch
+                    }
+
+                    fileSystemProvider = WebDavFileSource(
+                        serverUrl = entity.serverUrl,
+                        port = entity.port,
+                        basePath = entity.basePath,
+                        username = entity.username,
+                        password = pwd
+                    )
                 } else {
                     fileSystemProvider = when (sourceType) {
                         "local", "external" -> LocalFileSource(getApplication())
-                        "webdav" -> WebDavFileSource()
                         else -> LocalFileSource(getApplication())
                     }
                 }

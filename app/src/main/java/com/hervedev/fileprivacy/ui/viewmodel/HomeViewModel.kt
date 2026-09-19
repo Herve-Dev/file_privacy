@@ -15,7 +15,9 @@ import com.hervedev.fileprivacy.data.StorageVolumeInfo
 import com.hervedev.fileprivacy.data.StorageVolumesHelper
 import com.hervedev.fileprivacy.data.db.AppDatabase
 import com.hervedev.fileprivacy.data.db.SmbConnectionEntity
+import com.hervedev.fileprivacy.data.db.FtpConnectionEntity
 import com.hervedev.fileprivacy.domain.FileItem
+import com.hervedev.fileprivacy.domain.FtpConnection
 import com.hervedev.fileprivacy.domain.SmbConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -68,7 +70,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private var hasScannedOnce = false
 
+    private val ftpConnectionDao = db.ftpConnectionDao()
+
     val smbConnections: StateFlow<List<SmbConnection>> = smbConnectionDao.getAll()
+        .map { entities -> entities.map { it.toDomain() } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val ftpConnections: StateFlow<List<FtpConnection>> = ftpConnectionDao.getAll()
         .map { entities -> entities.map { it.toDomain() } }
         .stateIn(
             scope = viewModelScope,
@@ -173,7 +185,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteConnection(connection: SmbConnection) {
         viewModelScope.launch {
             smbConnectionDao.delete(SmbConnectionEntity.fromDomain(connection))
-            credentialStorage.deletePassword(connection.id)
+            credentialStorage.deletePassword(connection.id, type = "smb")
+        }
+    }
+
+    fun deleteFtpConnection(connection: FtpConnection) {
+        viewModelScope.launch {
+            ftpConnectionDao.delete(FtpConnectionEntity.fromDomain(connection))
+            credentialStorage.deletePassword(connection.id, type = "ftp")
         }
     }
 }

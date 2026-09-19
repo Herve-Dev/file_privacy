@@ -183,7 +183,7 @@ fun FileListScreen(
                             rootPath = rootPath,
                             onItemClick = { targetPath ->
                                 val targetRoute = if (connectionId != null) {
-                                    NavRoutes.smbListRoute(connectionId, targetPath)
+                                    NavRoutes.remoteListRoute(sourceType, connectionId, targetPath)
                                 } else {
                                     NavRoutes.fileListRoute(sourceType, targetPath)
                                 }
@@ -192,7 +192,7 @@ fun FileListScreen(
                                 if (!popped) {
                                     if (connectionId != null) {
                                         navController.navigate(targetRoute) {
-                                            popUpTo(NavRoutes.smbListRoute(connectionId, "")) { inclusive = false }
+                                            popUpTo(NavRoutes.remoteListRoute(sourceType, connectionId, "")) { inclusive = false }
                                         }
                                     } else {
                                         navController.navigate(targetRoute) {
@@ -327,7 +327,7 @@ fun FileListScreen(
                             viewModel.toggleSelection(item.path)
                         } else if (item.isDirectory) {
                             if (connectionId != null) {
-                                navController.navigate(NavRoutes.smbListRoute(connectionId, item.path))
+                                navController.navigate(NavRoutes.remoteListRoute(sourceType, connectionId, item.path))
                             } else {
                                 navController.navigate(NavRoutes.fileListRoute(sourceType, item.path))
                             }

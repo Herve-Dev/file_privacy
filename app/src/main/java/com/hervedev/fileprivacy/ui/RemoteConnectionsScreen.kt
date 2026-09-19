@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hervedev.fileprivacy.domain.FtpConnection
 import com.hervedev.fileprivacy.domain.SmbConnection
 import com.hervedev.fileprivacy.ui.components.AppCard
 import com.hervedev.fileprivacy.ui.dialogs.DeleteConfirmationDialog
@@ -62,9 +64,11 @@ fun RemoteConnectionsScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val smbConnections by viewModel.smbConnections.collectAsState()
+    val ftpConnections by viewModel.ftpConnections.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var connectionToDelete by remember { mutableStateOf<SmbConnection?>(null) }
+    var ftpConnectionToDelete by remember { mutableStateOf<FtpConnection?>(null) }
     var menuExpandedConnectionId by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
@@ -241,23 +245,137 @@ fun RemoteConnectionsScreen(
                 )
             }
 
-            item {
-                AppCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(Radius.card)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.medium),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            if (ftpConnections.isEmpty()) {
+                item {
+                    AppCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(Radius.card)
                     ) {
-                        Text(
-                            text = "Aucune connexion FTP configurée",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Aucune connexion FTP configurée",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.medium))
+                            OutlinedButton(
+                                onClick = {
+                                    navController.navigate(NavRoutes.ADD_FTP_CONNECTION)
+                                },
+                                shape = RoundedCornerShape(Radius.pill)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.small))
+                                Text("Ajouter une connexion FTP", fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+                }
+            } else {
+                items(ftpConnections, key = { "ftp_${it.id}" }) { connection ->
+                    Box {
+                        AppCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(Radius.card))
+                                .combinedClickable(
+                                    onClick = {
+                                        navController.navigate(NavRoutes.remoteListRoute("ftp", connection.id, ""))
+                                    },
+                                    onLongClick = {
+                                        menuExpandedConnectionId = connection.id
+                                    }
+                                ),
+                            shape = RoundedCornerShape(Radius.card)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(Spacing.medium),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Storage,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(end = 4.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(Spacing.medium))
+
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = connection.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (connection.useFtps) {
+                                            Spacer(modifier = Modifier.width(Spacing.small))
+                                            Surface(
+                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                shape = RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "FTPS",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${connection.serverAddress}:${connection.port}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = (menuExpandedConnectionId == connection.id),
+                            onDismissRequest = { menuExpandedConnectionId = null },
+                            shape = RoundedCornerShape(Radius.card)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Supprimer", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = {
+                                    menuExpandedConnectionId = null
+                                    ftpConnectionToDelete = connection
+                                }
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         OutlinedButton(
                             onClick = {
                                 navController.navigate(NavRoutes.ADD_FTP_CONNECTION)
@@ -333,6 +451,19 @@ fun RemoteConnectionsScreen(
             onConfirm = {
                 connectionToDelete = null
                 viewModel.deleteConnection(connection)
+            }
+        )
+    }
+
+    ftpConnectionToDelete?.let { connection ->
+        DeleteConfirmationDialog(
+            itemName = connection.name,
+            title = "Supprimer la connexion FTP ?",
+            message = "Voulez-vous vraiment supprimer la connexion FTP \"${connection.name}\" ?",
+            onDismiss = { ftpConnectionToDelete = null },
+            onConfirm = {
+                ftpConnectionToDelete = null
+                viewModel.deleteFtpConnection(connection)
             }
         )
     }

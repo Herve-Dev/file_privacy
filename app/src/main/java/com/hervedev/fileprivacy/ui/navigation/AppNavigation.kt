@@ -55,6 +55,7 @@ object NavRoutes {
     const val TRASH = "trash"
     const val FILE_LIST = "fileList/{sourceType}/{encodedPath}"
     const val FILE_LIST_SMB = "fileListSmb/{connectionId}/{encodedPath}"
+    const val FILE_LIST_REMOTE = "fileListRemote/{sourceType}/{connectionId}/{encodedPath}"
 
     fun categoryResultRoute(categoryName: String): String =
         "categoryResult/$categoryName"
@@ -64,6 +65,9 @@ object NavRoutes {
 
     fun smbListRoute(connectionId: Long, relativePath: String): String =
         "fileListSmb/$connectionId/${Uri.encode(relativePath)}"
+
+    fun remoteListRoute(sourceType: String, connectionId: Long, relativePath: String): String =
+        "fileListRemote/$sourceType/$connectionId/${Uri.encode(relativePath)}"
 }
 
 private data class NavTabItem(
@@ -217,6 +221,17 @@ fun AppNavigation(
             composable(
                 route = NavRoutes.FILE_LIST_SMB,
                 arguments = listOf(
+                    navArgument("connectionId") { type = NavType.LongType },
+                    navArgument("encodedPath") { type = NavType.StringType }
+                )
+            ) {
+                FileListScreen(navController = navController)
+            }
+
+            composable(
+                route = NavRoutes.FILE_LIST_REMOTE,
+                arguments = listOf(
+                    navArgument("sourceType") { type = NavType.StringType },
                     navArgument("connectionId") { type = NavType.LongType },
                     navArgument("encodedPath") { type = NavType.StringType }
                 )

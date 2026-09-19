@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration for FilePrivacy.
+    Allows cleartext HTTP traffic to support self-hosted local WebDAV servers
+    (e.g., Nextcloud or ownCloud running on a local LAN over HTTP without SSL).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -394,7 +394,7 @@ fun RemoteConnectionsScreen(
                 }
             }
 
-            // Section 3: WebDAV (préparation visuelle)
+            // Section 3: WebDAV
             item {
                 Spacer(modifier = Modifier.height(Spacing.small))
                 Text(
@@ -409,31 +409,31 @@ fun RemoteConnectionsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(Radius.card)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(Spacing.medium),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.CloudQueue,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(32.dp)
+                        Text(
+                            text = "Aucune connexion WebDAV configurée",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.width(Spacing.medium))
-                        Column {
-                            Text(
-                                text = "WebDAV",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        OutlinedButton(
+                            onClick = {
+                                navController.navigate(NavRoutes.ADD_WEBDAV_CONNECTION)
+                            },
+                            shape = RoundedCornerShape(Radius.pill)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Disponible prochainement",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
+                            Spacer(modifier = Modifier.width(Spacing.small))
+                            Text("Ajouter une connexion WebDAV", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

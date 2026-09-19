@@ -9,6 +9,7 @@ data class WebDavConnectionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val serverUrl: String,
+    val port: Int = 80,
     val username: String,
     val basePath: String = ""
 ) {
@@ -16,6 +17,7 @@ data class WebDavConnectionEntity(
         id = id,
         name = name,
         serverUrl = serverUrl,
+        port = port,
         username = username,
         basePath = basePath
     )
@@ -25,6 +27,7 @@ data class WebDavConnectionEntity(
             id = domain.id,
             name = domain.name,
             serverUrl = domain.serverUrl,
+            port = domain.port,
             username = domain.username,
             basePath = domain.basePath
         )

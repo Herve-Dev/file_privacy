@@ -107,7 +107,7 @@ class FileListViewModel(
                     val dao = db.smbConnectionDao()
                     val entity = dao.getById(connectionId)
                     val credStorage = CredentialStorage(getApplication())
-                    val pwd = credStorage.getPassword(connectionId) ?: ""
+                    val pwd = credStorage.getPassword(connectionId, type = "smb") ?: ""
 
                     if (entity == null) {
                         _isStorageAccessible.value = false
@@ -123,10 +123,30 @@ class FileListViewModel(
                         password = pwd,
                         port = entity.port
                     )
+                } else if (sourceType == "ftp" && connectionId != null) {
+                    val db = AppDatabase.getInstance(getApplication())
+                    val dao = db.ftpConnectionDao()
+                    val entity = dao.getById(connectionId)
+                    val credStorage = CredentialStorage(getApplication())
+                    val pwd = credStorage.getPassword(connectionId, type = "ftp") ?: ""
+
+                    if (entity == null) {
+                        _isStorageAccessible.value = false
+                        _errorMessage.value = "La connexion FTP n'existe plus."
+                        _isLoading.value = false
+                        return@launch
+                    }
+
+                    fileSystemProvider = FtpFileSource(
+                        serverAddress = entity.serverAddress,
+                        port = entity.port,
+                        username = entity.username,
+                        password = pwd,
+                        useFtps = entity.useFtps
+                    )
                 } else {
                     fileSystemProvider = when (sourceType) {
                         "local", "external" -> LocalFileSource(getApplication())
-                        "ftp" -> FtpFileSource()
                         "webdav" -> WebDavFileSource()
                         else -> LocalFileSource(getApplication())
                     }

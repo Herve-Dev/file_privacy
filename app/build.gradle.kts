@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.coil.video)
 
     testImplementation(libs.junit)
+    testImplementation("org.mockftpserver:MockFtpServer:3.2.0")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

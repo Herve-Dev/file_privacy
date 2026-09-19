@@ -378,9 +378,9 @@ private fun FileGridItem(
                         DuotoneFolderIcon(size = 42.dp)
                     } else {
                         val iconVector = when {
-                            isAudioFile -> Icons.Outlined.AudioFile
-                            isPdfFile -> Icons.Outlined.PictureAsPdf
-                            isApkFile -> Icons.Outlined.Android
+                            item.isAudio() -> Icons.Outlined.AudioFile
+                            item.isPdf() -> Icons.Outlined.PictureAsPdf
+                            item.isApk() -> Icons.Outlined.Android
                             else -> Icons.Outlined.Description
                         }
                         Icon(

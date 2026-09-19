@@ -308,13 +308,11 @@ fun FileListScreen(
                             }
                         }
 
-                        if (sourceType in listOf("local", "external")) {
-                            IconButton(onClick = { viewModel.toggleViewMode() }) {
-                                Icon(
-                                    imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,
-                                    contentDescription = if (isGridMode) "Afficher en liste" else "Afficher en grille"
-                                )
-                            }
+                        IconButton(onClick = { viewModel.toggleViewMode() }) {
+                            Icon(
+                                imageVector = if (isGridMode) Icons.AutoMirrored.Outlined.ViewList else Icons.Outlined.GridView,
+                                contentDescription = if (isGridMode) "Afficher en liste" else "Afficher en grille"
+                            )
                         }
                         if (clipboardState?.items?.isNotEmpty() == true) {
                             IconButton(
@@ -372,7 +370,7 @@ fun FileListScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.Center)
                 )
-            } else if (isGridMode && (sourceType == "local" || sourceType == "external")) {
+            } else if (isGridMode) {
                 FileGridView(
                     fileItems = fileItems,
                     selectedPaths = selectedPaths,

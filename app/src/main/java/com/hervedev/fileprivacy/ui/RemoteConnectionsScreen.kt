@@ -231,11 +231,11 @@ fun RemoteConnectionsScreen(
                 }
             }
 
-            // Section 2: FTP / SFTP (préparation visuelle)
+            // Section 2: FTP / FTPS
             item {
                 Spacer(modifier = Modifier.height(Spacing.small))
                 Text(
-                    text = "FTP / SFTP",
+                    text = "FTP / FTPS",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -246,31 +246,31 @@ fun RemoteConnectionsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(Radius.card)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(Spacing.medium),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Storage,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(32.dp)
+                        Text(
+                            text = "Aucune connexion FTP configurée",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.width(Spacing.medium))
-                        Column {
-                            Text(
-                                text = "FTP / SFTP",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        OutlinedButton(
+                            onClick = {
+                                navController.navigate(NavRoutes.ADD_FTP_CONNECTION)
+                            },
+                            shape = RoundedCornerShape(Radius.pill)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Disponible prochainement",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
+                            Spacer(modifier = Modifier.width(Spacing.small))
+                            Text("Ajouter une connexion FTP", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

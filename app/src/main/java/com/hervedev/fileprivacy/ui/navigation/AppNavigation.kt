@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.hervedev.fileprivacy.ui.AddFtpConnectionScreen
 import com.hervedev.fileprivacy.ui.AddSmbConnectionScreen
 import com.hervedev.fileprivacy.ui.CategoryResultScreen
 import com.hervedev.fileprivacy.ui.FileListScreen
@@ -50,6 +51,7 @@ object NavRoutes {
     const val CATEGORY_RESULT = "categoryResult/{categoryName}"
     const val IMAGE_VIEWER = "imageViewer"
     const val ADD_SMB_CONNECTION = "addSmbConnection"
+    const val ADD_FTP_CONNECTION = "addFtpConnection"
     const val TRASH = "trash"
     const val FILE_LIST = "fileList/{sourceType}/{encodedPath}"
     const val FILE_LIST_SMB = "fileListSmb/{connectionId}/{encodedPath}"
@@ -192,6 +194,10 @@ fun AppNavigation(
 
             composable(route = NavRoutes.ADD_SMB_CONNECTION) {
                 AddSmbConnectionScreen(navController = navController)
+            }
+
+            composable(route = NavRoutes.ADD_FTP_CONNECTION) {
+                AddFtpConnectionScreen(navController = navController)
             }
 
             composable(route = NavRoutes.TRASH) {

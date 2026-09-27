@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -396,10 +398,12 @@ fun HomeScreen(
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(Spacing.small)
                             ) {
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "Images",
                                         count = getCountText(FileCategory.IMAGES),
@@ -413,7 +417,7 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "Vidéos",
                                         count = getCountText(FileCategory.VIDEOS),
@@ -427,7 +431,7 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "Audio",
                                         count = getCountText(FileCategory.AUDIO),
@@ -444,10 +448,12 @@ fun HomeScreen(
                             }
 
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(Spacing.small)
                             ) {
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "Documents",
                                         count = getCountText(FileCategory.DOCUMENTS),
@@ -461,7 +467,7 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "Téléchargements",
                                         count = getCountText(FileCategory.DOWNLOADS),
@@ -475,7 +481,7 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                Box(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                     CategoryItemCard(
                                         title = "APK",
                                         count = getCountText(FileCategory.APK),

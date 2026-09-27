@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
+import com.hervedev.fileprivacy.ui.theme.TextMainLight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -246,7 +248,7 @@ fun CategoryItemCard(
 ) {
     AppCard(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(Radius.card),
         containerColor = bgColor
@@ -271,7 +273,7 @@ fun CategoryItemCard(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = TextMainLight
             )
 
             Spacer(modifier = Modifier.height(2.dp))

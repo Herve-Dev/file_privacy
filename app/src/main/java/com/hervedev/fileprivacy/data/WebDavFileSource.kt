@@ -61,6 +61,21 @@ class WebDavFileSource(
                 }
                 chain.proceed(requestBuilder.build())
             }
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val isHttps = request.url.scheme.equals("https", ignoreCase = true)
+                if (!isHttps) {
+                    val host = request.url.host
+                    val validation = NetworkAddressValidator.validateCleartextHost(host, "WebDAV/HTTP")
+                    if (validation != null) {
+                        throw java.io.IOException(
+                            validation.exceptionOrNull()?.message
+                                ?: "Hôte WebDAV non autorisé en mode HTTP non chiffré"
+                        )
+                    }
+                }
+                chain.proceed(request)
+            }
             .build()
     }
 

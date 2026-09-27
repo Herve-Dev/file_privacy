@@ -21,6 +21,13 @@ object FtpConnectionTester {
             FTPClient()
         }
 
+        // Sécurité : refuser le FTP non chiffré vers des hôtes non privés
+        if (!useFtps) {
+            NetworkAddressValidator.validateCleartextHost(serverAddress, "FTP")?.let {
+                return@withContext it
+            }
+        }
+
         try {
             client.connectTimeout = 5000
             client.setDefaultTimeout(5000)

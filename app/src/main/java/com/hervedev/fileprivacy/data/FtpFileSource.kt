@@ -50,6 +50,16 @@ class FtpFileSource(
         }
 
         try {
+            // Sécurité : refuser le FTP non chiffré vers des hôtes non privés
+            if (!useFtps) {
+                val validation = NetworkAddressValidator.validateCleartextHost(serverAddress, "FTP")
+                if (validation != null) {
+                    throw IOException(
+                        validation.exceptionOrNull()?.message ?: "Hôte FTP non autorisé en mode non chiffré"
+                    )
+                }
+            }
+
             client.connectTimeout = 10000
             client.setDefaultTimeout(10000)
             client.connect(serverAddress, port)

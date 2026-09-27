@@ -56,6 +56,15 @@ object WebDavConnectionTester {
         try {
             val fullUrl = buildFullWebDavUrl(serverUrl, port, basePath)
 
+            // Sécurité : refuser WebDAV en HTTP non chiffré vers des hôtes non privés
+            val isHttps = fullUrl.startsWith("https://", ignoreCase = true)
+            if (!isHttps) {
+                val host = try { java.net.URL(fullUrl).host } catch (_: Exception) { serverUrl.trim() }
+                NetworkAddressValidator.validateCleartextHost(host, "WebDAV/HTTP")?.let {
+                    return@withContext it
+                }
+            }
+
             val okHttpClient = OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
